@@ -22,13 +22,16 @@ Currently supports installing archlinux
 `# installer <action> CONFIGDIR`
 
 actions:
-- `install`: installs according to `CONFIGDIR/config`
-- `reinstall`: wipes and installs according to `CONFIGDIR/config`
-- `nshell`: starts a systemd-nspawn shell according to `CONFIGDIR/config`
-- `cshell`: starts a chroot shell according to `CONFIGDIR/config`
+- `install`: installs according to `CONFIGDIR`
+- `reinstall`: wipes and installs according to `CONFIGDIR`
+- `nshell`: starts a systemd-nspawn shell according to `CONFIGDIR`
+- `cshell`: starts a chroot shell according to `CONFIGDIR`
 
 CONFIGDIR:
 - `configs/defaults` is a valid and the default `CONFIGDIR`
+- `CONFIGDIR/config` contains information about the install
+- `CONFIGDIR/scripts` contains the scripts to be executed during the install
+- `CONFIGDIR/nspawn` contains the configurations for the systemd-nspawn container
 - `configs/defaults/config` is always sourced before `CONFIGDIR/config`
 - Even if you specify your own `CONFIGDIR`, only `CONFIGDIR/config` is used by default; set `$configdir` in your `CONFIGDIR/config` to use your whole `CONFIGDIR`
 
