@@ -17,6 +17,10 @@ Currently supports installing archlinux
 ## Known issues
 - for root, $HOME is set to / instead of /root
 
+## Requirements
+- A working `arch-install-scripts` installation
+- `systemd-nspawn`
+
 ## Usage
 `# installer <action> CONFIGDIR`
 
