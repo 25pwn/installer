@@ -34,11 +34,11 @@ bios_dev="" # /dev/sda
 username="" # user
 
 # scripts/packages:
-	allusers="bash_profile htop systemd vaapi fcitx5 gtk"
+	allusers="bash_profile user-ns htop systemd vaapi fcitx5 gtk"
 	allnonroot="$allusers pip yt-dlp docker-rootless"
 container_scripts="locale pacman paru dracut packages \
-$allusers sudo user-account journalctl networkmanager sddm \
-flatpak flatpak-breeze-dark flatpak-firefox virt-manager"
+$allusers sudo user-account networkmanager sddm \
+flatpak flatpak-breeze-dark virt-manager"
 user_container_scripts="$allnonroot aur_packages"
 arch_chroot_scripts="fstab grub"
 
