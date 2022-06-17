@@ -31,3 +31,6 @@ CONFIGDIR:
 - `configs/defaults` is a valid and the default `CONFIGDIR`
 - `configs/defaults/config` is always sourced before `CONFIGDIR/config`
 - Even if you specify your own `CONFIGDIR`, only `CONFIGDIR/config` is used by default; set `$configdir` in your `CONFIGDIR/config` to use your whole `CONFIGDIR`
+
+## Notes
+- Make sure your drives are partitioned and formatted before starting your install. In particular, the default config specifies a btrfs subvolume to install to; make sure it exists or remove the subvolume-related mount options.
