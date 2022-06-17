@@ -8,14 +8,11 @@ Currently supports installing archlinux
 
 ## Planned
 - Signing on `nicopwn` repo
-- Dependency resolving
+- Dependency system
 - Parallel install
 - Fedora Rawhide support
 - Disk encryption support
 - Update daemon
-
-## Known issues
-- for root, $HOME is set to / instead of /root
 
 ## Requirements
 - A working `arch-install-scripts` installation
@@ -33,4 +30,4 @@ actions:
 CONFIGDIR:
 - `configs/defaults` is a valid and the default `CONFIGDIR`
 - `configs/defaults/config` is always sourced before `CONFIGDIR/config`
-- Even if you specify your own `CONFIGDIR`, only `CONFIGDIR/config` is used by default; set `$configdir` in your `CONFIGDIR/config` to override
+- Even if you specify your own `CONFIGDIR`, only `CONFIGDIR/config` is used by default; set `$configdir` in your `CONFIGDIR/config` to use your whole `CONFIGDIR`
