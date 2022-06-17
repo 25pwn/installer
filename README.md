@@ -34,3 +34,4 @@ CONFIGDIR:
 
 ## Notes
 - Make sure your drives are partitioned and formatted before starting your install. In particular, the default config specifies a btrfs subvolume to install to; make sure it exists or remove the subvolume-related mount options.
+- `initramfs` files are generated inside the container, so make sure you use the fallback `initramfs` before updating them.
