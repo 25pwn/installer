@@ -1,0 +1,8 @@
+#!/bin/bash
+# fcitx-breeze
+tee $HOME/.bash_profile.d/ime.sh << 'EOF' > /dev/null
+export GTK_IM_MODULE=fcitx
+export QT_IM_MODULE=fcitx
+export XMODIFIERS=@im=fcitx
+EOF
+source $HOME/.bash_profile

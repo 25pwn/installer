@@ -1,0 +1,4 @@
+#!/bin/bash
+tee $HOME/.var/app/com.google.Chrome/config/chrome-flags.conf << 'EOF' > /dev/null
+--enable-features=VaapiVideoDecoder --disable-gpu-driver-workarounds
+EOF

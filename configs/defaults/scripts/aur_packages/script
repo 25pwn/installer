@@ -1,0 +1,6 @@
+#!/bin/bash
+installist=""
+for package in $aur_pkglist; do
+	installist="$installist aur/${package}"
+done
+paru -S --noconfirm --needed base $installist

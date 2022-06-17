@@ -1,0 +1,7 @@
+#!/bin/bash
+# run as: root
+# depends: dracut
+mkdir -p /etc/dracut.conf.d
+tee /etc/dracut.conf.d/compress.conf << 'EOF' > /dev/null
+compress="zstd"
+EOF

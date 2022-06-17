@@ -1,0 +1,12 @@
+#!/bin/bash
+createuser()
+{
+	if [ "$(compgen -u | grep -c "$username")" != "0" ]
+	then
+		return
+	fi
+	useradd -mG wheel $username
+	passwd -d $username
+	# usermod -aG wheel $username
+}
+createuser

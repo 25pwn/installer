@@ -1,0 +1,24 @@
+#!/bin/bash
+metadata()
+{
+	name="testscript"
+	packagename=""
+	depends=""
+	provides=""
+	conflicts=""
+	type="install configure"
+}
+userconfig()
+{
+	
+}
+install()
+{
+	testval="$testval"
+	printf "install\n$testval\n"
+}
+uninstall()
+{
+	testval="$testval"
+	printf "uninstall\n$testval\n"
+}

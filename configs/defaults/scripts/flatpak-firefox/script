@@ -1,0 +1,2 @@
+#!/bin/bash
+flatpak override --env=MOZ_DISABLE_RDD_SANDBOX=1 --env=MOZ_ENABLE_WAYLAND=1 org.mozilla.firefox

@@ -1,0 +1,65 @@
+#!/bin/bash
+configure_repos()
+{
+	if [ -f "/etc/pacman.d/mirrorlist.backup" ]
+	then
+		return
+	fi
+	mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+	tee /etc/pacman.d/mirrorlist <<- 'EOF' > /dev/null
+	Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch
+	Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+	EOF
+
+	pacman-key --init
+	pacman-key --populate archlinux
+	
+	pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
+	pacman-key --lsign-key FBA220DFC880C036
+	pacman -U --needed --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+
+	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+	[options]
+	ParallelDownloads = 16
+	Include = /etc/pacman.d/chaotic-aur
+	Include = /etc/pacman.d/nicopwn
+	EOF
+
+	tee -a /etc/pacman.d/chaotic-aur <<- 'EOF' > /dev/null
+	[chaotic-aur]
+	Include = /etc/pacman.d/chaotic-mirrorlist
+	EOF
+	
+	tee -a /etc/pacman.d/nicopwn <<- 'EOF' > /dev/null
+	[nicopwn]
+	SigLevel = Optional TrustAll
+	Server = https://raw.githubusercontent.com/25pwn/pacman-repo/master/repo/$arch
+	EOF
+
+	pacman -Sy
+}
+
+configure_paccache()
+{
+	if [ -f "/usr/share/libalpm/hooks/paccache.hook" ]
+	then
+		return
+	fi
+	tee /usr/share/libalpm/hooks/paccache.hook <<- 'EOF' > /dev/null
+	[Trigger]
+	Operation = Install
+	Operation = Remove
+	Operation = Upgrade
+	Type = Package
+	Target = *
+	[Action]
+	Description = running paccache -rvk1
+	When = PostTransaction
+	Exec = /usr/bin/paccache -rvk1
+	EOF
+	# pacman -Sc
+	pacman -S --needed --noconfirm pacman-contrib
+}
+
+configure_repos
+configure_paccache

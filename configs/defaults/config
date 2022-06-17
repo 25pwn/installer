@@ -1,0 +1,96 @@
+#!/bin/bash
+# script config:
+
+# verbosities
+# 0 error
+# 1 info
+# 2 debug
+verbosity="2"
+
+configdir="$scriptprefix/configs/defaults/"
+
+# install config:
+distro="archlinux"
+machinename="" # archlinux
+
+fde="0"
+
+declare -A mountdev
+declare -A mounttype
+declare -A mountopts
+
+btrfssubvol="sys/$machinename"
+
+mountdev["/"]="" # /dev/sda2
+mounttype["/"]="btrfs"
+mountopts["/"]="subvol=$btrfssubvol,compress=zstd:0"
+
+mountdev["/boot/efi"]="" # /dev/sda1
+mounttype["/boot/efi"]="vfat"
+mountopts["/boot/efi"]="defaults"
+
+bios_dev="" # /dev/sda
+
+username="" # user
+
+# scripts/packages:
+	allusers="bash_profile htop systemd vaapi fcitx5 gtk"
+	allnonroot="$allusers pip yt-dlp docker-rootless"
+container_scripts="locale pacman paru dracut packages \
+$allusers sudo user-account journalctl networkmanager sddm \
+flatpak flatpak-breeze-dark flatpak-firefox virt-manager"
+user_container_scripts="$allnonroot aur_packages"
+arch_chroot_scripts="fstab grub"
+
+linux_kernels="linux-zen linux" # linux
+	declare -A pkgs
+
+	# system
+	pkgs[linux]="$linux_kernels linux-firmware dracut dracut-hook"
+	pkgs[grub]="efibootmgr os-prober grub"
+	
+	pkgs[system]="sudo networkmanager util-linux"
+	pkgs[utils]="nano vi tmux htop arch-install-scripts base-devel nvtop"
+	pkgs[disk]="fdisk gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools mtools cryptsetup lvm2 nilfs-utils ntfs-3g udftools"
+	pkgs[disk_extra]="f2fs-tools hfsutils hfsprogs jfsutils reiser4progs reiserfsprogs reiserfs-utils xfsprogs xfsdump"
+	pkgs[utils_etc]="man-db p7zip"
+	pkgs[utils_net]="openssh rsync wget curl aria2 iputils traceroute"
+	pkgs[other]="python"
+	pkgs[packagemanagers]="paru packagekit-qt5"
+
+	# cpu
+	pkgs[intel_cpu]="intel-ucode"
+	pkgs[amd_cpu]="amd-ucode"
+
+	# gpu
+	pkgs[intel_gpu]="libva-intel-driver intel-gpu-tools"
+	pkgs[nvidia_gpu]="nvidia libva-nvidia-driver"
+	pkgs[amd_gpu]="libva-mesa-driver vulkan-radeon amdvlk mesa-vdpau radeontop"
+	pkgs[vaapi]="libva libva-utils libvdpau-va-gl"
+	pkgs[vdpau]="libva-vdpau-driver vdpauinfo"
+
+	pkgs[etc_drivers]="asusctl"
+
+	# desktop
+	pkgs[fonts]="noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
+
+	pipewire_pkgs="pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire wireplumber"
+	desktop_portals="xdg-desktop-portal-kde xdg-desktop-portal-gtk xdg-desktop-portal-gnome xdg-desktop-portal"
+	pkgs[desktop_base]="wayland $pipewire_pkgs $desktop_portals"
+	pkgs[fcitx5]="fcitx5 fcitx5-qt fcitx5-gtk fcitx5-configtool fcitx5-hangul fcitx5-mozc"
+	pkgs[phonon]="phonon-qt5-vlc phonon-qt5-gstreamer gst-libav gst-plugins-good gst-plugins-ugly gst-plugins-bad gstreamer-vaapi"
+	pkgs[kde_plasma]="plasma-meta plasma sddm plasma-wayland-session"
+
+	pkgs[kde_apps]="konsole dolphin kate spectacle filelight plasma-systemmonitor ksysguard partitionmanager ark gwenview kwalletmanager"
+
+	pkgs[etc_apps]="flatpak gparted protonvpn-gui"
+
+	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
+	pkgs[devel]="visual-studio-code-bin gnome-keyring"
+	pkgs[etc]="virt-manager docker-rootless"
+
+pkglist="${pkgs[@]}"
+
+aur_pkglist="firefox-nightly"
+flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark"
+# flatpak_pkglist="$flatpak_pkglist com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles"

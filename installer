@@ -1,0 +1,408 @@
+#!/bin/bash
+
+# verbosity
+# 0 error
+# 1 info
+# 2 debug
+
+print()
+{
+	declare -A colors=(\
+	[DEFAULT]='\e[0m'\
+	[RED]='\e[31m'\
+	[GREEN]='\e[32m'\
+	[YELLOW]='\e[33m'\
+	[BLUE]='\e[34m'\
+	[LRED]='\e[91m'\
+	[LGREEN]='\e[92m'\
+	[LYELLOW]='\e[93m'\
+	[LBLUE]='\e[94m'\
+	)
+	printf "${colors[$1]}%s${colors[DEFAULT]}\n" "$2"
+}
+debug()
+{
+	if [ "$verbosity" -ge "2" ]; then
+		print "GREEN" "$1"
+	fi
+}
+info()
+{
+	if [ "$verbosity" -ge "1" ]; then
+		print "LGREEN" "$1"
+	fi
+}
+warning()
+{
+	print "LYELLOW" "$1"
+}
+error()
+{
+	print "LRED" "$1"
+	exit 1
+}
+prefixoutput()
+{
+	sed "s/^/${1} /"
+}
+
+# source:
+# https://stackoverflow.com/questions/59895/how-can-i-get-the-source-directory-of-a-bash-script-from-within-the-script-itsel/246128#246128
+get_script_prefix()
+{
+	SOURCE=${BASH_SOURCE[0]}
+	while [ -h "$SOURCE" ]; do # resolve $SOURCE until the file is no longer a symlink
+		DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+		SOURCE=$(readlink "$SOURCE")
+		[[ $SOURCE != /* ]] && SOURCE=$DIR/$SOURCE # if $SOURCE was a relative symlink, we need to resolve it relative to the path where the symlink file was located
+	done
+	DIR=$( cd -P "$( dirname "$SOURCE" )" >/dev/null 2>&1 && pwd )
+	
+	printf "%s" "$DIR"
+}
+
+setup_mounts()
+{
+	debug "Setting up mounts"
+	root_mnt="/var/lib/machines/$machinename"
+	randomid="$(printf '%05d' $RANDOM)" # used to create mountpoints to avoid collisions
+
+	for mountpoint in ${!mountdev[@]}; do
+		mkdir -p "${root_mnt}"/"${mountpoint}"
+		mount "${mountdev[${mountpoint}]}" "$root_mnt/${mountpoint}" \
+		 -t "${mounttype[${mountpoint}]}" -o "${mountopts[${mountpoint}]}" \
+		&& debug "Mounted ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint" \
+		|| error "Failed to mount ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint"
+	done
+}
+cleanup_mounts()
+{
+	if [ ! -d "$root_mnt" ]; then
+		return
+	fi
+	debug "Cleaning up mounts"
+	debug "Recursively unmounting $root_mnt"
+	umount -R "$root_mnt"
+	debug "Removing mountpoint $root_mnt"
+	rm -d "$root_mnt"
+}
+
+bootstrap_system()
+{
+	debug "Bootstrapping system"
+	
+	debug "Running pacstrap"
+	pacstrap -cGM "$root_mnt" base || error "Failed to bootstrap system"
+
+	debug "Running systemd-firstboot"
+	systemd-firstboot \
+	--root "$root_mnt" \
+	--locale "en_US.UTF-8" \
+	--hostname "$machinename" \
+	--force || error "Failed to initially configure system"
+}
+
+start_container()
+{
+	debug "Configuring container"
+
+	mkdir -p "/etc/systemd/system/systemd-nspawn@$machinename.service.d"
+	cp "$configdir/nspawn/override.conf" \
+	"/etc/systemd/system/systemd-nspawn@$machinename.service.d/overrride.conf"
+
+	mkdir -p "/etc/systemd/nspawn"
+	cp "$configdir/nspawn/machinename.nspawn" \
+	"/etc/systemd/nspawn/$machinename.nspawn"
+
+	debug "Starting Container"
+	machinectl start "$machinename" && debug "Started container"
+}
+poweroff_container()
+{
+	container_status="$(systemctl show "systemd-nspawn@$machinename" -P StatusText)"
+	if [ "$container_status" != "Container running: Ready." ]; then
+		return
+	fi
+
+	debug "Shutting down container"
+	machinectl poweroff "$machinename"
+	
+	debug "Cleaning up container configurations"
+	rm -rf "/etc/systemd/system/systemd-nspawn@$machinename.service.d"
+	rm -f "/etc/systemd/nspawn/$machinename.nspawn"
+}
+
+
+
+
+
+
+container_run()
+{
+	# $1 = user
+	# $2 = machinename
+	# stdin = commands
+
+	if [ "$1" != "root" ]; then
+		userflag="--user"
+	fi
+
+	systemd-run \
+	$userflag -PM "$1"@"$2" \
+	bash <<- ENDOFSCRIPT
+	$(cat /dev/stdin)
+	ENDOFSCRIPT
+}
+container_run_script()
+{
+	# $1 = user
+	# $2 = machinename
+	# $3 = script
+	
+	container_run "$1" "$2" <<- ENDOFSCRIPT || return 1
+	$(cat "$defaultconfigfile")
+	$(cat "$configfile")
+	$(cat "$configdir/scripts/$3/script")
+	ENDOFSCRIPT
+}
+container_scripts()
+{
+	# machinectl shell "root"@"$machinename"
+	# machinectl shell "$username"@"$machinename"
+	# systemctl status "systemd-nspawn@$machinename"
+	
+	debug "Running container_scripts scripts"
+	for script in $container_scripts; do
+		debug "Running $script script in container"
+		container_run_script "root" "$machinename" "$script" \
+		|| error "Failed to run $script in container"
+	done
+
+	debug "Running user_container_scripts scripts"
+	for script in $user_container_scripts; do
+		debug "Running $script script in container"
+		container_run_script "$username" "$machinename" "$script" \
+		|| error "Failed to run $script in container"
+	done
+
+	container_run "root" "$machinename" <<- ENDOFSCRIPT
+	btrfs fi usage /
+	ENDOFSCRIPT
+}
+container_shell()
+{
+	machinectl shell "$1"@"$machinename"
+}
+
+
+arch-chroot_run()
+{
+	# $1 = user
+	# $2 = target
+	# stdin = commands
+
+	if [ "$1" != "root" ]; then
+	userarg="-u $1"
+	fi
+
+	arch-chroot $userarg "$2" bash <<- ENDOFSCRIPT
+	$(cat /dev/stdin)
+	ENDOFSCRIPT
+}
+arch-chroot_run_script()
+{
+	# $1 = user
+	# $2 = script
+
+	arch-chroot_run "$1" "$2" <<- ENDOFSCRIPT
+	$(cat "$defaultconfigfile")
+	$(cat "$configfile")
+	$(cat "$configdir/scripts/$3/script")
+	ENDOFSCRIPT
+}
+arch-chroot_scripts()
+{
+	for script in $arch_chroot_scripts; do
+		debug "Running $script script in arch-chroot"
+		arch-chroot_run_script "root" "$root_mnt" "$script" \
+		|| error "Failed to run $script in arch-chroot"
+	done
+}
+
+
+
+
+
+install()
+{
+	info "Starting install"
+
+	setup_mounts
+
+	bootstrap_system
+
+	start_container
+	container_scripts
+	poweroff_container
+
+	arch-chroot_scripts
+
+	if [ "$verbosity" -ge "2" ]; then
+		debug "Showing install size"
+		debug "$(du -hs "$root_mnt")"
+	fi
+	
+	cleanup_mounts
+
+	info "Finished install"
+}
+
+uninstall()
+{
+	info "Starting uninstall"
+
+	setup_mounts
+
+	if [ -e "${mountdev[/boot/efi]}" ]; then
+		debug "Clearing EFI"
+		rm -rf "$root_mnt/boot/efi/EFI/grub"
+		debug "Unmounting EFI"
+		umount "$root_mnt/boot/efi/"
+	fi
+
+	debug "Clearing root"
+	rm -rf "$root_mnt/"*
+	debug "Unmounting root" 
+	umount "$root_mnt/"
+	rm -d "$root_mnt"
+
+	cleanup_mounts
+
+	info "Finished uninstall"
+}
+
+reinstall()
+{
+	info "Starting reinstall"
+	uninstall
+	install
+	info "Finished reinstall"
+}
+
+nshell()
+{
+	setup_mounts
+	start_container
+	info "Entering container"
+	machinectl shell "root"@"$machinename" 
+	info "Exited container"
+	poweroff_container
+	cleanup_mounts
+}
+
+cshell()
+{
+	setup_mounts
+	info "Entering chroot"
+	arch-chroot "$root_mnt" bash
+	info "Exited chroot"
+	cleanup_mounts
+}
+
+cleanup_script()
+{
+	debug "Running script cleanup"
+
+	poweroff_container
+	cleanup_mounts
+
+	trap - EXIT
+	trap - SIGINT
+
+	debug "Exiting"
+	exit
+}
+
+exit_hook()
+{
+	print "LRED" "Running exit hook"
+	cleanup_script
+}
+
+sigint_hook()
+{
+	print "LRED" "Running sigint hook"
+	cleanup_script
+}
+
+setup_script()
+{
+	trap "exit_hook" EXIT
+	trap "sigint_hook" SIGINT
+}
+
+parse_args()
+{
+	if [ "$EUID" != "0" ]; then
+		error "Insufficient Privileges"
+	elif [ "$*" == "" ]; then
+		error "No arguments specified"
+	elif [ "$1" != "" ]; then
+		valid_action="0"
+		for action in install uninstall reinstall nshell cshell; do
+			if [ "$1" == "$action" ]; then
+				valid_action="1"
+			fi
+		done
+		if [ "$valid_action" == "0" ]; then
+			error "Invalid action"
+		fi
+	elif [ "$2" == "" ]; then
+		error "No config folder specified"
+	elif [ ! -f "$2/config" ]; then
+		error "Config file $2/config does not exist"
+	fi
+
+	script_action="$1"
+
+	scriptprefix="$(get_script_prefix)"
+
+	defaultconfigfile="$scriptprefix/configs/defaults/config"
+	source "$defaultconfigfile"
+
+	configfile="$2/config"
+	source "$configfile"
+
+
+	unset="0"
+	for var in configdir distro machinename; do
+    	if [ "${!var}" == "" ]; then
+        	warning "$var is unset"
+        	unset="1"
+    	fi
+	done
+
+	if [ "$unset" == "1" ]; then
+    	error "Insufficient configuration"
+	fi
+
+
+
+	if [ "$sourced" == 0 ]; then
+		setup_script
+		"$script_action"
+		cleanup_script
+	else
+		setup_script
+	fi
+}
+
+# sources:
+# https://stackoverflow.com/a/28776166/18379499
+# https://unix.stackexchange.com/a/220840/517083
+if [ "$(return 0 2>/dev/null; printf "%s" "$?")" ]; then
+	sourced=0
+	parse_args "$@"
+else
+	sourced=1
+fi

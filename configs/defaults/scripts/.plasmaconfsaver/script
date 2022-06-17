@@ -1,0 +1,3 @@
+#!/bin/bash
+# https://superuser.com/questions/1012790/run-kde-applet-from-command-line-within-i3wm
+kpackagetool5 -i $file

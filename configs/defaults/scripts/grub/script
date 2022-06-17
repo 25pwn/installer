@@ -1,0 +1,43 @@
+#!/bin/bash
+# run as root
+
+install_grub()
+{
+	if [ ! -f /boot/efi/EFI/Boot/boot*.efi ]; then
+		removable="--removable"
+	fi
+	
+	if [ -e "${mountdev[/boot/efi]}" ]; then
+		grub-install --target="x86_64-efi" --efi-directory=/boot/efi --boot-directory=/boot/efi/EFI --bootloader-id="GRUB" $removable --no-nvram --force
+	fi
+	if [ -e "$bios_dev" ]; then
+		grub-install --target="i386-pc" --boot-directory=/boot/efi/EFI "$bios_dev" --force
+	fi
+	# i386-coreboot
+}
+
+configure_grub_defaults()
+{
+	if [ -f "/etc/default/grub.backup" ]; then
+		rm "/etc/default/grub"
+		mv "/etc/default/grub.backup" "/etc/default/grub"
+	fi
+	cp "/etc/default/grub" "/etc/default/grub.backup"
+	tee -a /etc/default/grub <<- EOF > /dev/null
+	GRUB_DISTRIBUTOR="$machinename"
+	GRUB_CMDLINE_LINUX_DEFAULT=""
+	EOF
+}
+
+run_grub_mkconfig()
+{
+	grub-mkconfig -o /boot/efi/EFI/grub/grub.cfg
+}
+
+postinstall()
+{
+	install_grub
+	configure_grub_defaults
+	run_grub_mkconfig
+}
+postinstall
