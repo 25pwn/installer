@@ -34,11 +34,11 @@ bios_dev="" # /dev/sda
 username="" # user
 
 # scripts/packages:
-	allusers="bash_profile user-ns htop systemd vaapi fcitx5 gtk"
+	allusers="bash_profile htop systemd vaapi fcitx5 gtk"
 	allnonroot="$allusers pip yt-dlp docker-rootless"
 container_scripts="locale pacman paru dracut packages \
 $allusers sudo user-account networkmanager sddm \
-flatpak flatpak-breeze-dark virt-manager"
+flatpak flatpak-breeze-dark"
 user_container_scripts="$allnonroot aur_packages"
 arch_chroot_scripts="fstab grub"
 
@@ -51,8 +51,8 @@ linux_kernels="linux-zen linux" # linux
 	
 	pkgs[system]="sudo networkmanager util-linux"
 	pkgs[utils]="nano vi tmux htop arch-install-scripts base-devel nvtop"
-	pkgs[disk]="fdisk gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools mtools cryptsetup lvm2 nilfs-utils ntfs-3g udftools"
-	pkgs[disk_extra]="f2fs-tools hfsutils hfsprogs jfsutils reiser4progs reiserfsprogs reiserfs-utils xfsprogs xfsdump"
+	pkgs[disk]="gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools mtools cryptsetup lvm2 nilfs-utils ntfs-3g udftools"
+	pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump"
 	pkgs[utils_etc]="man-db p7zip"
 	pkgs[utils_net]="openssh rsync wget curl aria2 iputils traceroute"
 	pkgs[other]="python"
@@ -64,12 +64,12 @@ linux_kernels="linux-zen linux" # linux
 
 	# gpu
 	pkgs[intel_gpu]="libva-intel-driver intel-gpu-tools"
-	pkgs[nvidia_gpu]="nvidia libva-nvidia-driver"
+	pkgs[nvidia_gpu]="nvidia"
 	pkgs[amd_gpu]="libva-mesa-driver vulkan-radeon amdvlk mesa-vdpau radeontop"
 	pkgs[vaapi]="libva libva-utils libvdpau-va-gl"
 	pkgs[vdpau]="libva-vdpau-driver vdpauinfo"
 
-	pkgs[etc_drivers]="asusctl"
+	pkgs[etc_drivers]=""
 
 	# desktop
 	pkgs[fonts]="noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
@@ -87,10 +87,10 @@ linux_kernels="linux-zen linux" # linux
 
 	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
 	pkgs[devel]="visual-studio-code-bin gnome-keyring"
-	pkgs[etc]="virt-manager docker-rootless"
+	pkgs[etc]=""
 
 pkglist="${pkgs[@]}"
 
-aur_pkglist="firefox-nightly"
+aur_pkglist="firefox-nightly" # libva-nvidia-driver asusctl supergfxctl
 flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark"
 # flatpak_pkglist="$flatpak_pkglist com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles"
