@@ -42,7 +42,7 @@ flatpak flatpak-breeze-dark"
 user_container_scripts="$allnonroot aur_packages"
 arch_chroot_scripts="fstab grub"
 
-linux_kernels="linux-zen linux" # linux
+linux_kernels="linux" # linux
 	unset pkgs
 	declare -A pkgs
 
