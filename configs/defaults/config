@@ -51,11 +51,10 @@ linux_kernels="linux" # linux
 	pkgs[grub]="efibootmgr os-prober grub"
 	
 	pkgs[system]="sudo networkmanager util-linux"
-	pkgs[utils]="nano vi tmux htop arch-install-scripts base-devel nvtop"
-	pkgs[disk]="gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools mtools cryptsetup lvm2 nilfs-utils ntfs-3g udftools"
-	pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump"
-	pkgs[utils_etc]="man-db p7zip"
-	pkgs[utils_net]="openssh rsync wget curl aria2 iputils traceroute"
+	pkgs[utils]="nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh rsync wget curl aria2 iputils"
+	pkgs[disk]="gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools ntfs-3g"
+	# pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump mtools nilfs-utils cryptsetup lvm2 udftools"
+	# pkgs[utils_extra]="traceroute"
 	pkgs[other]="python"
 	pkgs[packagemanagers]="paru packagekit-qt5"
 
@@ -70,8 +69,6 @@ linux_kernels="linux" # linux
 	pkgs[vaapi]="libva libva-utils libvdpau-va-gl"
 	pkgs[vdpau]="libva-vdpau-driver vdpauinfo"
 
-	pkgs[etc_drivers]=""
-
 	# desktop
 	pkgs[fonts]="noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
 
@@ -79,17 +76,16 @@ linux_kernels="linux" # linux
 	desktop_portals="xdg-desktop-portal-kde xdg-desktop-portal-gtk xdg-desktop-portal-gnome xdg-desktop-portal"
 	pkgs[desktop_base]="wayland $pipewire_pkgs $desktop_portals"
 	pkgs[fcitx5]="fcitx5 fcitx5-qt fcitx5-gtk fcitx5-configtool fcitx5-hangul fcitx5-mozc"
+
 	pkgs[phonon]="phonon-qt5-vlc phonon-qt5-gstreamer gst-libav gst-plugins-good gst-plugins-ugly gst-plugins-bad gstreamer-vaapi"
 	pkgs[kde_plasma]="plasma-meta plasma sddm plasma-wayland-session"
-
-	pkgs[kde_apps]="konsole dolphin kate spectacle filelight plasma-systemmonitor ksysguard partitionmanager ark gwenview kwalletmanager"
+	pkgs[kde_apps]="konsole dolphin kate spectacle plasma-systemmonitor ksysguard ark kwalletmanager"
+	# pkgs[kde_apps_extra]="filelight partitionmanager gwenview"
 
 	pkgs[etc_apps]="flatpak gparted protonvpn-gui"
 
 	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
 	pkgs[devel]="visual-studio-code-bin gnome-keyring"
-	pkgs[etc]=""
-
 pkglist="${pkgs[@]}"
 
 aur_pkglist="firefox-nightly" # libva-nvidia-driver asusctl supergfxctl
