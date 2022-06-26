@@ -82,12 +82,12 @@ linux_kernels="linux" # linux
 	pkgs[kde_apps]="konsole dolphin kate spectacle plasma-systemmonitor ksysguard ark kwalletmanager"
 	# pkgs[kde_apps_extra]="filelight partitionmanager gwenview"
 
-	pkgs[etc_apps]="flatpak gparted protonvpn-gui"
+	pkgs[etc_apps]="flatpak gparted"
 
 	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
 	pkgs[devel]="visual-studio-code-bin gnome-keyring"
 pkglist="${pkgs[@]}"
 
-aur_pkglist="firefox-nightly" # libva-nvidia-driver asusctl supergfxctl
+aur_pkglist="firefox-nightly protonvpn-gui cloudflare-warp-bin" # libva-nvidia-driver asusctl supergfxctl
 flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark"
 # flatpak_pkglist="$flatpak_pkglist com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles"
