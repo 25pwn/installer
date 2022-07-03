@@ -11,7 +11,7 @@ configdir="$scriptprefix/configs/defaults/"
 
 # install config:
 distro="archlinux"
-machinename="" # archlinux
+machinename="archlinux"
 
 fde="0"
 
@@ -21,33 +21,33 @@ declare -A mountopts
 
 btrfssubvol="sys/$machinename"
 
-mountdev["/"]="" # /dev/sda2
+mountdev["/"]="" # /dev/loop0p1
 mounttype["/"]="btrfs"
 mountopts["/"]="subvol=$btrfssubvol,compress=zstd:0"
 
-mountdev["/boot/efi"]="" # /dev/sda1
+mountdev["/boot/efi"]="" # /dev/loop0p2
 mounttype["/boot/efi"]="vfat"
 mountopts["/boot/efi"]="defaults"
 
-bios_dev="" # /dev/sda
+bios_dev="" # /dev/loop0
 
 username="" # user
 
 # scripts/packages:
 	allusers="bash_profile htop systemd vaapi fcitx5 gtk"
-	allnonroot="$allusers pip yt-dlp docker-rootless"
-container_scripts="locale pacman paru dracut packages \
-$allusers sudo user-account networkmanager sddm \
-flatpak flatpak-breeze-dark"
-user_container_scripts="$allnonroot aur_packages"
+	allnonroot="$allusers pip yt-dlp"
+container_scripts="locale pacman \
+$allusers sudo user-account"
+user_container_scripts="paru dracut packages networkmanager sddm \
+flatpak flatpak-breeze-dark $allnonroot"
 arch_chroot_scripts="fstab grub"
 
-linux_kernels="linux" # linux
+linux_kernels="linux-zen" # linux
 	unset pkgs
 	declare -A pkgs
 
 	# system
-	pkgs[linux]="$linux_kernels linux-firmware dracut dracut-hook"
+	pkgs[linux]="$linux_kernels linux-firmware dracut"
 	pkgs[grub]="efibootmgr os-prober grub"
 	
 	pkgs[system]="sudo networkmanager util-linux"
@@ -56,7 +56,7 @@ linux_kernels="linux" # linux
 	# pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump mtools nilfs-utils cryptsetup lvm2 udftools"
 	# pkgs[utils_extra]="traceroute"
 	pkgs[other]="python"
-	pkgs[packagemanagers]="paru packagekit-qt5"
+	pkgs[packagemanagers]="packagekit-qt5"
 
 	# cpu
 	pkgs[intel_cpu]="intel-ucode"
@@ -64,7 +64,7 @@ linux_kernels="linux" # linux
 
 	# gpu
 	pkgs[intel_gpu]="libva-intel-driver intel-gpu-tools"
-	pkgs[nvidia_gpu]="nvidia"
+	pkgs[nvidia_gpu]="nvidia-dkms"
 	pkgs[amd_gpu]="libva-mesa-driver vulkan-radeon amdvlk mesa-vdpau radeontop"
 	pkgs[vaapi]="libva libva-utils libvdpau-va-gl"
 	pkgs[vdpau]="libva-vdpau-driver vdpauinfo"
@@ -82,12 +82,12 @@ linux_kernels="linux" # linux
 	pkgs[kde_apps]="konsole dolphin kate spectacle plasma-systemmonitor ksysguard ark kwalletmanager"
 	# pkgs[kde_apps_extra]="filelight partitionmanager gwenview"
 
-	pkgs[etc_apps]="flatpak gparted"
+	pkgs[etc_apps]="flatpak gparted aur/firefox-nightly aur/protonvpn-gui aur/cloudflare-warp-bin"
 
 	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
-	pkgs[devel]="visual-studio-code-bin gnome-keyring"
+	pkgs[devel]="aur/visual-studio-code-bin gnome-keyring"
 pkglist="${pkgs[@]}"
 
-aur_pkglist="firefox-nightly protonvpn-gui cloudflare-warp-bin" # libva-nvidia-driver asusctl supergfxctl
+# libva-nvidia-driver asusctl supergfxctl
 flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark"
 # flatpak_pkglist="$flatpak_pkglist com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles"

@@ -4,5 +4,5 @@ for kernel in $linux_kernels; do
 	headerlist="$headerlist ${kernel}-headers"
 done
 
-sudo pacman -S --needed --noconfirm $headerlist v4l2loopback-dkms
+paru -Sy --needed --noconfirm $headerlist v4l2loopback-dkms
 flatpak install -y flathub app/com.obsproject.Studio//stable

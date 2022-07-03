@@ -1,2 +1,2 @@
 #!/bin/bash
-flatpak override --env=GTK_THEME=Breeze-Dark
+sudo flatpak override --env=GTK_THEME=Breeze-Dark

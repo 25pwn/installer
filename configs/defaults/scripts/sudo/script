@@ -1,4 +1,5 @@
 #!/bin/bash
+pacman -S --needed --noconfirm sudo
 tee /etc/sudoers.d/wheel << 'EOF' > /dev/null
 %wheel ALL=(ALL) ALL
 EOF

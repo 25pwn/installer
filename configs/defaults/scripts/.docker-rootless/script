@@ -1,7 +1,8 @@
 #!/bin/bash
 # https://docs.docker.com/engine/security/rootless/
-sudo pacman -S fuse-overlayfs
+paru -Sy --needed --noconfirm fuse-overlayfs
 
 ## rootless
 curl -fsSL https://get.docker.com/rootless | sh
+systemctl --user daemon-reload
 systemctl --user enable --now docker

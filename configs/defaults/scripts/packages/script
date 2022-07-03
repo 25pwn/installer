@@ -1,2 +1,2 @@
 #!/bin/bash
-pacman -S --needed --noconfirm base $pkglist
+paru -Sy --needed --noconfirm base $pkglist

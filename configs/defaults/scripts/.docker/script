@@ -1,5 +1,5 @@
 #!/bin/bash
-sudo pacman -S fuse-overlayfs
+paru -Sy --needed --noconfirm fuse-overlayfs
 
 ## root
 sudo systemctl enable --now docker
