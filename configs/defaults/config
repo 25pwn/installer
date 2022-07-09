@@ -34,7 +34,7 @@ bios_dev="" # /dev/loop0
 username="" # user
 
 # scripts/packages:
-	allusers="bash_profile htop systemd vaapi fcitx5 gtk"
+	allusers="bash_profile tmux htop systemd vaapi fcitx5 gtk"
 	allnonroot="$allusers pip yt-dlp"
 container_scripts="locale pacman \
 $allusers sudo user-account"
