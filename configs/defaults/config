@@ -39,12 +39,11 @@ user_container_scripts="paru dracut packages networkmanager sddm \
 bash_profile tmux htop systemd vaapi fcitx5 gtk pip flatpak flatpak-breeze-dark"
 arch_chroot_scripts="fstab grub"
 
-linux_kernels="linux-zen" # linux
 	unset pkgs
 	declare -A pkgs
 
 	# system
-	pkgs[linux]="$linux_kernels linux-firmware dracut"
+	pkgs[linux]="linux-zen linux-zen-headers linux-firmware dracut"
 	pkgs[grub]="efibootmgr os-prober grub"
 	
 	pkgs[system]="sudo networkmanager util-linux"

@@ -1,8 +1,4 @@
 #!/bin/bash
-headerlist=""
-for kernel in $linux_kernels; do
-	headerlist="$headerlist ${kernel}-headers"
-done
 
 paru -Sy --needed --noconfirm $headerlist v4l2loopback-dkms
 flatpak install -y flathub app/com.obsproject.Studio//stable
