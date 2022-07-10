@@ -66,7 +66,7 @@ arch_chroot_scripts="fstab grub"
 
 	## gpu
 	pkgs[intel_gpu]="libva-intel-driver intel-gpu-tools"
-	pkgs[nvidia_gpu]="nvidia-dkms"
+	pkgs[nvidia_gpu]="nvidia-dkms" # aur/libva-nvidia-driver
 	pkgs[amd_gpu]="libva-mesa-driver vulkan-radeon amdvlk mesa-vdpau radeontop"
 	pkgs[vaapi]="libva libva-utils libvdpau-va-gl"
 	pkgs[vdpau]="libva-vdpau-driver vdpauinfo"
@@ -91,7 +91,7 @@ arch_chroot_scripts="fstab grub"
 	pkgs[obs]="obs-studio v4l2loopback-dkms"
 pkglist="${pkgs[@]}"
 
-# aur/libva-nvidia-driver asusctl supergfxctl
+
 flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark"
 pip_pkglist="yt-dlp konsave"
 # flatpak_pkglist="$flatpak_pkglist com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles"
