@@ -1,0 +1,6 @@
+#!/bin/bash
+# run as: root
+# depends: dracut
+sudo tee /etc/dracut.conf.d/compress.conf << 'EOF' > /dev/null
+add_drivers+=" nvidia nvidia_modeset nvidia_uvm nvidia_drm "
+EOF

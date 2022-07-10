@@ -35,7 +35,9 @@ username="" # user
 
 # scripts/packages:
 container_scripts="locale pacman sudo user-account"
-user_container_scripts="paru dracut packages networkmanager sddm \
+user_container_scripts="paru \
+dracut nvidia \
+packages networkmanager sddm \
 bash_profile tmux htop systemd vaapi fcitx5 gtk pip flatpak flatpak-breeze-dark"
 arch_chroot_scripts="fstab grub"
 
