@@ -20,6 +20,14 @@ configure_repos()
 	EOF
 }
 
+add_multilib_repo()
+{
+	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+	[multilib]
+	Include = /etc/pacman.d/mirrorlist
+	EOF
+}
+
 add_nicopwn_repo()
 {
 	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
@@ -89,4 +97,5 @@ configure_paccache()
 }
 
 configure_repos
+add_multilib_repo
 configure_paccache
