@@ -1,4 +1,4 @@
 #!/bin/bash
 paru -Sy virt-manager qemu-desktop libvirt edk2-ovmf dnsmasq iptables-nft swtpm
-sudo systemctl enable --now libvirtd.service
+sudo systemctl enable --now libvirtd.socket
 sudo virsh net-start default
