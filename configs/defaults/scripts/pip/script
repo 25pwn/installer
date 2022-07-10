@@ -5,4 +5,5 @@ tee "$HOME/.bash_profile.d/pip.sh" << 'EOF' > /dev/null
 append_path "$HOME/.local/bin"
 EOF
 source "$HOME/.bash_profile"
-# python -m pip install --upgrade pip
+
+python -m pip --no-input install --user --upgrade -U pip ${pip_pkglist}
