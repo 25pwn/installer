@@ -81,7 +81,8 @@ arch_chroot_scripts="fstab grub"
 	pkgs[etc_apps]="flatpak gparted aur/firefox-nightly aur/protonvpn-gui aur/cloudflare-warp-bin"
 
 	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
-	pkgs[devel]="aur/visual-studio-code-bin gnome-keyring"
+	pkgs[vscode]="aur/visual-studio-code-bin gnome-keyring"
+	pkgs[obs]="obs-studio v4l2loopback-dkms"
 pkglist="${pkgs[@]}"
 
 # libva-nvidia-driver asusctl supergfxctl
