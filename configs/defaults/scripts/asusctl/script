@@ -1,2 +1,2 @@
 #!/bin/bash
-sudo systemctl enable --now asusd
+systemctl enable --now power-profiles-daemon.service

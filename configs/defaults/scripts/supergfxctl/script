@@ -1,2 +1,3 @@
 #!/bin/bash
+paru -Sy --needed --noconfirm supergfxctl
 sudo systemctl enable --now supergfxd
