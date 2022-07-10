@@ -1,5 +1,6 @@
 #!/bin/bash
 tee $HOME/.bash_profile.d/vaapi.sh << 'EOF' > /dev/null
+#!/bin/bash
 export LIBVA_DRIVERS_PATH=/usr/lib/dri
 # export LIBVA_DRIVER_NAME=
 printf "%s\n" "\$LIBVA_DRIVER_NAME is not set;"

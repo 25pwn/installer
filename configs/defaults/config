@@ -41,7 +41,9 @@ container_scripts="locale pacman sudo user-account"
 user_container_scripts="paru \
 dracut nvidia \
 packages networkmanager sddm \
-bash_profile tmux htop systemd vaapi fcitx5 gtk pip flatpak flatpak-breeze-dark" # asusctl supergfxctl
+tmux htop \
+bash_profile systemd vaapi fcitx5 gtk pip wayland \
+flatpak flatpak-breeze-dark" # asusctl supergfxctl
 arch_chroot_scripts="fstab grub"
 
 	unset pkgs
