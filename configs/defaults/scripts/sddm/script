@@ -1,2 +1,6 @@
 #!/bin/bash
+sudo tee -a /usr/share/sddm/scripts/Xsetup << 'EOF' > /dev/null
+xrandr --auto
+EOF
+
 sudo systemctl enable --now sddm.service
