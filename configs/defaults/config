@@ -34,12 +34,9 @@ bios_dev="" # /dev/loop0
 username="" # user
 
 # scripts/packages:
-	allusers="bash_profile tmux htop systemd vaapi fcitx5 gtk"
-	allnonroot="$allusers pip"
-container_scripts="locale pacman \
-$allusers sudo user-account"
+container_scripts="locale pacman sudo user-account"
 user_container_scripts="paru dracut packages networkmanager sddm \
-flatpak flatpak-breeze-dark $allnonroot"
+bash_profile tmux htop systemd vaapi fcitx5 gtk pip flatpak flatpak-breeze-dark"
 arch_chroot_scripts="fstab grub"
 
 linux_kernels="linux-zen" # linux
