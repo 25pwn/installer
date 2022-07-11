@@ -37,10 +37,12 @@ bios_dev="" # /dev/loop0
 username="" # user
 
 ## scripts/packages:
-container_scripts="locale pacman sudo user-account"
+container_scripts="locale sudo user-account \
+pacman"
 user_container_scripts="paru \
 dracut nvidia \
-packages networkmanager sddm \
+packages \
+networkmanager sddm \
 tmux htop \
 bash_profile systemd vaapi fcitx5 gtk pip wayland \
 flatpak flatpak-breeze-dark" # asusctl supergfxctl
@@ -54,10 +56,10 @@ arch_chroot_scripts="fstab grub"
 	pkgs[grub]="efibootmgr os-prober grub"
 	
 	pkgs[system]="sudo networkmanager util-linux"
-	pkgs[utils]="nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh rsync wget curl aria2 iputils"
+	pkgs[utils]="nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh iputils"
 	pkgs[disk]="gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools ntfs-3g"
 	# pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump mtools nilfs-utils cryptsetup lvm2 udftools"
-	# pkgs[utils_extra]="traceroute"
+	# pkgs[net_extra]="traceroute rsync wget curl aria2"
 	pkgs[other]="python"
 
 	## cpu
