@@ -160,8 +160,8 @@ container_run_script()
 	# $3 = script
 	
 	container_run "$1" "$2" <<- ENDOFSCRIPT || return 1
-	$(cat "$defaultconfigfile")
-	$(cat "$configfile")
+	${default_config_contents}
+	${config_contents}
 	$(cat "$configdir/scripts/$3/script")
 	ENDOFSCRIPT
 }
@@ -215,8 +215,8 @@ arch-chroot_run_script()
 	# $2 = script
 
 	arch-chroot_run "$1" "$2" <<- ENDOFSCRIPT
-	$(cat "$defaultconfigfile")
-	$(cat "$configfile")
+	${default_config_contents}
+	${config_contents}
 	$(cat "$configdir/scripts/$3/script")
 	ENDOFSCRIPT
 }
@@ -368,9 +368,11 @@ parse_args()
 	scriptprefix="$(get_script_prefix)"
 
 	defaultconfigfile="$scriptprefix/configs/defaults/config"
+	default_config_contents="$(cat "${defaultconfigfile}")"
 	source "$defaultconfigfile"
 
 	configfile="$2/config"
+	config_contents="$(cat "${configfile}")"
 	source "$configfile"
 
 
