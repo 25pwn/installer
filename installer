@@ -175,6 +175,7 @@ container_scripts()
 		|| log "error" "Failed to run $script in container"
 	done
 
+	log "debug" "Showing disk usage"
 	container_run "root" "$machinename" <<- ENDOFSCRIPT
 	btrfs fi usage /
 	ENDOFSCRIPT
