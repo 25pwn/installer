@@ -1,5 +1,5 @@
 #!/bin/bash
-## script config:
+## installer config:
 
 ## verbosities
 ## 0 error
@@ -9,7 +9,7 @@ verbosity="2"
 
 configdir="$scriptprefix/configs/defaults/"
 
-## install config:
+## installation config:
 distro="archlinux"
 machinename="archlinux"
 
@@ -36,7 +36,7 @@ bios_dev="" # /dev/loop0
 
 username="" # user
 
-## scripts/packages:
+## scripts:
 container_scripts="locale sudo user-account \
 pacman"
 user_container_scripts="paru \
@@ -48,6 +48,8 @@ bash_profile systemd vaapi fcitx5 gtk pip wayland \
 flatpak flatpak-breeze-dark" # asusctl supergfxctl
 arch_chroot_scripts="fstab grub"
 
+## script configs:
+## packages
 	unset pkgs
 	declare -A pkgs
 
@@ -93,7 +95,10 @@ arch_chroot_scripts="fstab grub"
 	pkgs[obs]="obs-studio v4l2loopback-dkms"
 pkglist="${pkgs[@]}"
 
-
+## flatpak
 flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark"
-pip_pkglist="yt-dlp konsave"
 # flatpak_pkglist="$flatpak_pkglist com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles"
+
+## pip
+pip_pkglist="yt-dlp konsave"
+
