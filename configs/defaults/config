@@ -37,8 +37,7 @@ bios_dev="" # /dev/loop0
 username="" # user
 
 ## scripts:
-container_scripts="locale sudo user-account \
-pacman"
+container_scripts="locale pacman sudo user-account"
 user_container_scripts="paru \
 dracut nvidia \
 packages \
