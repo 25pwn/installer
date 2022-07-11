@@ -1,11 +1,6 @@
 #!/bin/bash
 
-# verbosity
-# 0 error
-# 1 info
-# 2 debug
-
-print() # print COLOR TEXT
+print() # COLOR TEXT
 {
 	declare -A colors=(\
 	[DEFAULT]='\e[0m'\
@@ -21,7 +16,7 @@ print() # print COLOR TEXT
 	printf "${colors[$1]}%s${colors[DEFAULT]}\n" "$2"
 }
 
-log() # log LEVEL TEXT
+log() # LEVEL TEXT
 {
 	case $1 in
 		"debug")
@@ -44,7 +39,7 @@ log() # log LEVEL TEXT
 	esac
 }
 
-prefixoutput()
+prefixoutput() # OUTPUT
 {
 	sed "s/^/${1} /"
 }
@@ -140,12 +135,8 @@ poweroff_container()
 
 
 
-container_run()
+container_run() # USER MACHINENAME < COMMANDS
 {
-	# $1 = user
-	# $2 = machinename
-	# stdin = commands
-
 	if [ "$1" != "root" ]; then
 		userflag="--user"
 	fi
@@ -156,12 +147,8 @@ container_run()
 	$(cat /dev/stdin)
 	ENDOFSCRIPT
 }
-container_run_script()
+container_run_script() # USER MACHINENAME SCRIPT
 {
-	# $1 = user
-	# $2 = machinename
-	# $3 = script
-	
 	container_run "$1" "$2" <<- ENDOFSCRIPT || return 1
 	${default_config_contents}
 	${config_contents}
@@ -192,18 +179,14 @@ container_scripts()
 	btrfs fi usage /
 	ENDOFSCRIPT
 }
-container_shell()
+container_shell() # USER
 {
 	machinectl shell "$1"@"$machinename"
 }
 
 
-arch-chroot_run()
+arch-chroot_run() # USER TARGET < COMMANDS
 {
-	# $1 = user
-	# $2 = target
-	# stdin = commands
-
 	if [ "$1" != "root" ]; then
 	userarg="-u $1"
 	fi
@@ -212,11 +195,8 @@ arch-chroot_run()
 	$(cat /dev/stdin)
 	ENDOFSCRIPT
 }
-arch-chroot_run_script()
+arch-chroot_run_script() # USER SCRIPT
 {
-	# $1 = user
-	# $2 = script
-
 	arch-chroot_run "$1" "$2" <<- ENDOFSCRIPT
 	${default_config_contents}
 	${config_contents}
@@ -344,7 +324,7 @@ setup_script()
 	trap "sigint_hook" SIGINT
 }
 
-parse_args()
+parse_args() # ACTION CONFIG
 {
 	if [ "$EUID" != "0" ]; then
 		log "error" "Insufficient Privileges"
