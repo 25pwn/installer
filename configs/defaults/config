@@ -34,7 +34,7 @@ mountopts["/boot/efi"]="defaults"
 
 bios_dev="" # /dev/loop0
 
-username="" # user
+username="user" # user
 
 ## scripts:
 container_scripts="locale pacman sudo user-account"
