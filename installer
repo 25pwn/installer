@@ -5,7 +5,7 @@
 # 1 info
 # 2 debug
 
-print()
+print() # print COLOR TEXT
 {
 	declare -A colors=(\
 	[DEFAULT]='\e[0m'\
@@ -20,27 +20,30 @@ print()
 	)
 	printf "${colors[$1]}%s${colors[DEFAULT]}\n" "$2"
 }
-debug()
+
+log() # log LEVEL TEXT
 {
-	if [ "$verbosity" -ge "2" ]; then
-		print "GREEN" "$1"
-	fi
+	case $1 in
+		"debug")
+			if [ "$verbosity" -ge "2" ]; then
+				print "GREEN" "$2"
+			fi
+			;;
+		"info")
+			if [ "$verbosity" -ge "1" ]; then
+				print "LGREEN" "$2"
+			fi
+			;;
+		"warning")
+			print "LYELLOW" "$2"
+			;;
+		"error")
+			print "LRED" "$2"
+			exit 1
+			;;
+	esac
 }
-info()
-{
-	if [ "$verbosity" -ge "1" ]; then
-		print "LGREEN" "$1"
-	fi
-}
-warning()
-{
-	print "LYELLOW" "$1"
-}
-error()
-{
-	print "LRED" "$1"
-	exit 1
-}
+
 prefixoutput()
 {
 	sed "s/^/${1} /"
@@ -63,7 +66,7 @@ get_script_prefix()
 
 setup_mounts()
 {
-	debug "Setting up mounts"
+	log "debug" "Setting up mounts"
 	root_mnt="/var/lib/machines/$machinename"
 	randomid="$(printf '%05d' $RANDOM)" # used to create mountpoints to avoid collisions
 
@@ -71,8 +74,8 @@ setup_mounts()
 		mkdir -p "${root_mnt}"/"${mountpoint}"
 		mount "${mountdev[${mountpoint}]}" "$root_mnt/${mountpoint}" \
 		 -t "${mounttype[${mountpoint}]}" -o "${mountopts[${mountpoint}]}" \
-		&& debug "Mounted ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint" \
-		|| error "Failed to mount ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint"
+		&& log "debug" "Mounted ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint" \
+		|| log "error" "Failed to mount ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint"
 	done
 }
 cleanup_mounts()
@@ -80,31 +83,31 @@ cleanup_mounts()
 	if [ ! -d "$root_mnt" ]; then
 		return
 	fi
-	debug "Cleaning up mounts"
-	debug "Recursively unmounting $root_mnt"
+	log "debug" "Cleaning up mounts"
+	log "debug" "Recursively unmounting $root_mnt"
 	umount -R "$root_mnt"
-	debug "Removing mountpoint $root_mnt"
+	log "debug" "Removing mountpoint $root_mnt"
 	rm -d "$root_mnt"
 }
 
 bootstrap_system()
 {
-	debug "Bootstrapping system"
+	log "debug" "Bootstrapping system"
 	
-	debug "Running pacstrap"
-	pacstrap -cGM "$root_mnt" base || error "Failed to bootstrap system"
+	log "debug" "Running pacstrap"
+	pacstrap -cGM "$root_mnt" base || log "error" "Failed to bootstrap system"
 
-	debug "Running systemd-firstboot"
+	log "debug" "Running systemd-firstboot"
 	systemd-firstboot \
 	--root "$root_mnt" \
 	--locale "en_US.UTF-8" \
 	--hostname "$machinename" \
-	--force || error "Failed to initially configure system"
+	--force || log "error" "Failed to initially configure system"
 }
 
 start_container()
 {
-	debug "Configuring container"
+	log "debug" "Configuring container"
 
 	mkdir -p "/etc/systemd/system/systemd-nspawn@$machinename.service.d"
 	cp "$configdir/nspawn/override.conf" \
@@ -114,8 +117,8 @@ start_container()
 	cp "$configdir/nspawn/machinename.nspawn" \
 	"/etc/systemd/nspawn/$machinename.nspawn"
 
-	debug "Starting Container"
-	machinectl start "$machinename" && debug "Started container"
+	log "debug" "Starting Container"
+	machinectl start "$machinename" && log "debug" "Started container"
 }
 poweroff_container()
 {
@@ -124,10 +127,10 @@ poweroff_container()
 		return
 	fi
 
-	debug "Shutting down container"
+	log "debug" "Shutting down container"
 	machinectl poweroff "$machinename"
 	
-	debug "Cleaning up container configurations"
+	log "debug" "Cleaning up container configurations"
 	rm -rf "/etc/systemd/system/systemd-nspawn@$machinename.service.d"
 	rm -f "/etc/systemd/nspawn/$machinename.nspawn"
 }
@@ -171,18 +174,18 @@ container_scripts()
 	# machinectl shell "$username"@"$machinename"
 	# systemctl status "systemd-nspawn@$machinename"
 	
-	debug "Running container_scripts scripts"
+	log "debug" "Running container_scripts scripts"
 	for script in $container_scripts; do
-		debug "Running $script script in container"
+		log "debug" "Running $script script in container"
 		container_run_script "root" "$machinename" "$script" \
-		|| error "Failed to run $script in container"
+		|| log "error" "Failed to run $script in container"
 	done
 
-	debug "Running user_container_scripts scripts"
+	log "debug" "Running user_container_scripts scripts"
 	for script in $user_container_scripts; do
-		debug "Running $script script in container"
+		log "debug" "Running $script script in container"
 		container_run_script "$username" "$machinename" "$script" \
-		|| error "Failed to run $script in container"
+		|| log "error" "Failed to run $script in container"
 	done
 
 	container_run "root" "$machinename" <<- ENDOFSCRIPT
@@ -223,9 +226,9 @@ arch-chroot_run_script()
 arch-chroot_scripts()
 {
 	for script in $arch_chroot_scripts; do
-		debug "Running $script script in arch-chroot"
+		log "debug" "Running $script script in arch-chroot"
 		arch-chroot_run_script "root" "$root_mnt" "$script" \
-		|| error "Failed to run $script in arch-chroot"
+		|| log "error" "Failed to run $script in arch-chroot"
 	done
 }
 
@@ -235,7 +238,7 @@ arch-chroot_scripts()
 
 install()
 {
-	info "Starting install"
+	log "info" "Starting install"
 
 	setup_mounts
 
@@ -248,54 +251,54 @@ install()
 	arch-chroot_scripts
 
 	if [ "$verbosity" -ge "2" ]; then
-		debug "Showing install size"
-		debug "$(du -hs "$root_mnt")"
+		log "debug" "Showing install size"
+		log "debug" "$(du -hs "$root_mnt")"
 	fi
 	
 	cleanup_mounts
 
-	info "Finished install"
+	log "info" "Finished install"
 }
 
 uninstall()
 {
-	info "Starting uninstall"
+	log "info" "Starting uninstall"
 
 	setup_mounts
 
 	if [ -e "${mountdev[/boot/efi]}" ]; then
-		debug "Clearing EFI"
+		log "debug" "Clearing EFI"
 		rm -rf "$root_mnt/boot/efi/EFI/grub"
-		debug "Unmounting EFI"
+		log "debug" "Unmounting EFI"
 		umount "$root_mnt/boot/efi/"
 	fi
 
-	debug "Clearing root"
+	log "debug" "Clearing root"
 	rm -rf "$root_mnt/"*
-	debug "Unmounting root" 
+	log "debug" "Unmounting root" 
 	umount "$root_mnt/"
 	rm -d "$root_mnt"
 
 	cleanup_mounts
 
-	info "Finished uninstall"
+	log "info" "Finished uninstall"
 }
 
 reinstall()
 {
-	info "Starting reinstall"
+	log "info" "Starting reinstall"
 	uninstall
 	install
-	info "Finished reinstall"
+	log "info" "Finished reinstall"
 }
 
 nshell()
 {
 	setup_mounts
 	start_container
-	info "Entering container"
+	log "info" "Entering container"
 	machinectl shell "root"@"$machinename" 
-	info "Exited container"
+	log "info" "Exited container"
 	poweroff_container
 	cleanup_mounts
 }
@@ -303,15 +306,15 @@ nshell()
 cshell()
 {
 	setup_mounts
-	info "Entering chroot"
+	log "info" "Entering chroot"
 	arch-chroot "$root_mnt" bash
-	info "Exited chroot"
+	log "info" "Exited chroot"
 	cleanup_mounts
 }
 
 cleanup_script()
 {
-	debug "Running script cleanup"
+	log "debug" "Running script cleanup"
 
 	poweroff_container
 	cleanup_mounts
@@ -319,7 +322,7 @@ cleanup_script()
 	trap - EXIT
 	trap - SIGINT
 
-	debug "Exiting"
+	log "debug" "Exiting"
 	exit
 }
 
@@ -344,9 +347,9 @@ setup_script()
 parse_args()
 {
 	if [ "$EUID" != "0" ]; then
-		error "Insufficient Privileges"
+		log "error" "Insufficient Privileges"
 	elif [ "$*" == "" ]; then
-		error "No arguments specified"
+		log "error" "No arguments specified"
 	elif [ "$1" != "" ]; then
 		valid_action="0"
 		for action in install uninstall reinstall nshell cshell; do
@@ -355,12 +358,12 @@ parse_args()
 			fi
 		done
 		if [ "$valid_action" == "0" ]; then
-			error "Invalid action"
+			log "error" "Invalid action"
 		fi
 	elif [ "$2" == "" ]; then
-		error "No config folder specified"
+		log "error" "No config folder specified"
 	elif [ ! -f "$2/config" ]; then
-		error "Config file $2/config does not exist"
+		log "error" "Config file $2/config does not exist"
 	fi
 
 	script_action="$1"
@@ -379,13 +382,13 @@ parse_args()
 	unset="0"
 	for var in configdir distro machinename; do
     	if [ "${!var}" == "" ]; then
-        	warning "$var is unset"
+        	log "warning" "$var is unset"
         	unset="1"
     	fi
 	done
 
 	if [ "$unset" == "1" ]; then
-    	error "Insufficient configuration"
+    	log "error" "Insufficient configuration"
 	fi
 
 
