@@ -67,7 +67,7 @@ add_g14_repo()
 	Include = /etc/pacman.d/g14
 	EOF
 
-	tee -a /etc/pacman.d/nicopwn <<- 'EOF' > /dev/null
+	tee -a /etc/pacman.d/g14 <<- 'EOF' > /dev/null
 	[g14]
 	SigLevel = DatabaseNever Optional TrustAll
 	Server = https://arch.asus-linux.org
