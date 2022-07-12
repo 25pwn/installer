@@ -133,28 +133,15 @@ poweroff_container()
 
 
 
-
-
-container_run() # USER MACHINENAME < COMMANDS
+generate_script() # SCRIPT
 {
-	if [ "$1" != "root" ]; then
-		userflag="--user"
-	fi
-
-	systemd-run \
-	$userflag -PM "$1"@"$2" \
-	bash <<- ENDOFSCRIPT
-	$(cat /dev/stdin)
-	ENDOFSCRIPT
-}
-container_run_script() # USER MACHINENAME SCRIPT
-{
-	container_run "$1" "$2" <<- ENDOFSCRIPT || return 1
+	cat <<- ENDOFSCRIPT
 	${default_config_contents}
 	${config_contents}
-	$(cat "$configdir/scripts/$3/script")
+	$(cat "$configdir/scripts/$1/script")
 	ENDOFSCRIPT
 }
+
 container_scripts()
 {
 	# machinectl shell "root"@"$machinename"
@@ -164,56 +151,66 @@ container_scripts()
 	log "debug" "Running container_scripts scripts"
 	for script in $container_scripts; do
 		log "debug" "Running $script script in container"
-		container_run_script "root" "$machinename" "$script" \
+		run_script "systemd-nspawn" "root" "$script" \
 		|| log "error" "Failed to run $script in container"
 	done
 
 	log "debug" "Running user_container_scripts scripts"
 	for script in $user_container_scripts; do
 		log "debug" "Running $script script in container"
-		container_run_script "$username" "$machinename" "$script" \
+		run_script "systemd-nspawn" "$username" "$script" \
 		|| log "error" "Failed to run $script in container"
 	done
 
 	log "debug" "Showing disk usage"
-	container_run "root" "$machinename" <<- ENDOFSCRIPT
+	run_commands "root" "$machinename" <<- ENDOFSCRIPT
 	btrfs fi usage /
 	ENDOFSCRIPT
 }
-container_shell() # USER
-{
-	machinectl shell "$1"@"$machinename"
-}
 
-
-arch-chroot_run() # USER TARGET < COMMANDS
-{
-	if [ "$1" != "root" ]; then
-	userarg="-u $1"
-	fi
-
-	arch-chroot $userarg "$2" bash <<- ENDOFSCRIPT
-	$(cat /dev/stdin)
-	ENDOFSCRIPT
-}
-arch-chroot_run_script() # USER SCRIPT
-{
-	arch-chroot_run "$1" "$2" <<- ENDOFSCRIPT
-	${default_config_contents}
-	${config_contents}
-	$(cat "$configdir/scripts/$3/script")
-	ENDOFSCRIPT
-}
 arch-chroot_scripts()
 {
 	for script in $arch_chroot_scripts; do
 		log "debug" "Running $script script in arch-chroot"
-		arch-chroot_run_script "root" "$root_mnt" "$script" \
+		run_script "arch-chroot" "root" "$script" \
 		|| log "error" "Failed to run $script in arch-chroot"
 	done
 }
 
+run_commands() # HYPERVISOR USER < COMMANDS
+{
+	case $1 in
+		"arch-chroot")
+			if [ "$1" != "root" ]; then
+				userarg="-u $2"
+			fi
 
+			arch-chroot \
+			$userarg "$root_mnt" \
+			bash <<- ENDOFSCRIPT
+			$(cat /dev/stdin)
+			ENDOFSCRIPT
+			;;
+		"systemd-nspawn")
+			if [ "$1" != "root" ]; then
+				userflag="--user"
+			fi
+
+			systemd-run \
+			$userflag -PM "$2"@"$machinename" \
+			bash <<- ENDOFSCRIPT
+			$(cat /dev/stdin)
+			ENDOFSCRIPT
+			;;
+	esac
+}
+
+run_script() # HYPERVISOR USER SCRIPT
+{
+	run_commands $1 $2 <<-ENDOFSCRIPT
+	$(generate_script $script)
+	ENDOFSCRIPT
+}
 
 
 
