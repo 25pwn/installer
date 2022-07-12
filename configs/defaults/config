@@ -60,7 +60,7 @@ pacman_repo_list="multilib" # g14
 	pkgs[grub]="efibootmgr os-prober grub"
 	
 	pkgs[system]="sudo networkmanager util-linux"
-	pkgs[utils]="nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh iputils"
+	pkgs[utils]="nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh"
 	pkgs[disk]="gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools ntfs-3g"
 	# pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump mtools nilfs-utils cryptsetup lvm2 udftools"
 	# pkgs[net_extra]="traceroute rsync wget curl aria2"
@@ -80,8 +80,8 @@ pacman_repo_list="multilib" # g14
 	## desktop
 	pkgs[fonts]="noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
 
-	pipewire_pkgs="pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire wireplumber"
-	desktop_portals="xdg-desktop-portal-kde xdg-desktop-portal-gtk xdg-desktop-portal-gnome xdg-desktop-portal"
+		pipewire_pkgs="pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire wireplumber"
+		desktop_portals="xdg-desktop-portal-kde xdg-desktop-portal-gtk xdg-desktop-portal-gnome xdg-desktop-portal"
 	pkgs[desktop_base]="wayland $pipewire_pkgs $desktop_portals"
 	pkgs[fcitx5]="fcitx5 fcitx5-qt fcitx5-gtk fcitx5-configtool fcitx5-hangul fcitx5-mozc"
 
@@ -98,8 +98,7 @@ pacman_repo_list="multilib" # g14
 pkglist="${pkgs[@]}"
 
 ## flatpak
-flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark"
-# flatpak_pkglist="$flatpak_pkglist com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles"
+flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark" # com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles
 
 ## pip
 pip_pkglist="yt-dlp konsave"
