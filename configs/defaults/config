@@ -48,6 +48,9 @@ flatpak flatpak-breeze-dark" # asusctl supergfxctl
 arch_chroot_scripts="fstab grub"
 
 ## script configs:
+## pacman
+pacman_repo_list="multilib" # g14
+
 ## packages
 	unset pkgs
 	declare -A pkgs
