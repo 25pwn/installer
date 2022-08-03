@@ -42,7 +42,7 @@ user_container_scripts="paru \
 dracut nvidia \
 packages \
 networkmanager sddm \
-tmux htop \
+zsh tmux htop \
 bash_profile systemd vaapi fcitx5 gtk pip wayland \
 flatpak flatpak-breeze-dark" # asusctl supergfxctl
 arch_chroot_scripts="fstab grub"
@@ -60,7 +60,7 @@ pacman_repo_list="multilib" # g14
 	pkgs[grub]="efibootmgr os-prober grub"
 	
 	pkgs[system]="sudo networkmanager util-linux"
-	pkgs[utils]="nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh"
+	pkgs[utils]="zsh grml-zsh-config nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh"
 	pkgs[disk]="gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools ntfs-3g"
 	# pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump mtools nilfs-utils cryptsetup lvm2 udftools"
 	# pkgs[net_extra]="traceroute rsync wget curl aria2"
