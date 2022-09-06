@@ -44,7 +44,7 @@ packages \
 networkmanager sddm \
 zsh tmux htop \
 bash_profile systemd vaapi fcitx5 gtk pip wayland \
-flatpak flatpak-breeze-dark" # asusctl supergfxctl
+flatpak flatpak-breeze-dark firefox-nightly" # asusctl supergfxctl
 arch_chroot_scripts="fstab grub"
 
 ## script configs:
@@ -90,7 +90,7 @@ pacman_repo_list="multilib" # g14
 	pkgs[kde_apps]="konsole dolphin kate spectacle plasma-systemmonitor ksysguard ark kwalletmanager"
 	# pkgs[kde_apps_extra]="filelight partitionmanager gwenview"
 
-	pkgs[etc_apps]="flatpak gparted aur/firefox-nightly-bin aur/protonvpn-gui aur/cloudflare-warp-bin"
+	pkgs[etc_apps]="flatpak gparted aur/protonvpn-gui aur/cloudflare-warp-bin" # aur/firefox-nightly-bin
 
 	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
 	pkgs[vscode]="aur/visual-studio-code-bin gnome-keyring"
