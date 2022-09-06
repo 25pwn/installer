@@ -2,18 +2,36 @@
 
 print() # COLOR TEXT
 {
-	declare -A colors=(\
-	[DEFAULT]='\e[0m'\
-	[RED]='\e[31m'\
-	[GREEN]='\e[32m'\
-	[YELLOW]='\e[33m'\
-	[BLUE]='\e[34m'\
-	[LRED]='\e[91m'\
-	[LGREEN]='\e[92m'\
-	[LYELLOW]='\e[93m'\
-	[LBLUE]='\e[94m'\
-	)
-	printf "${colors[$1]}%s${colors[DEFAULT]}\n" "$2"
+	case $1 in
+		"DEFAULT")
+			COLORCODE='\e[0m'
+			;;
+		"RED")
+			COLORCODE='\e[31m'
+			;;
+		"GREEN")
+			COLORCODE='\e[32m'
+			;;
+		"YELLOW")
+			COLORCODE='\e[33m'
+			;;
+		"BLUE")
+			COLORCODE='\e[34m'
+			;;
+		"LRED")
+			COLORCODE='\e[91m'
+			;;
+		"LGREEN")
+			COLORCODE='\e[92m'
+			;;
+		"LYELLOW")
+			COLORCODE='\e[93m'
+			;;
+		"LBLUE")
+			COLORCODE='\e[94m'
+			;;
+	esac
+	printf "${COLORCODE}%s\e[0m\n" "$2"
 }
 
 log() # LEVEL TEXT
