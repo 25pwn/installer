@@ -171,3 +171,4 @@ add_repos()
 
 setup_pacman
 add_repos
+pacman -Sy
