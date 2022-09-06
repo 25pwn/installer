@@ -32,6 +32,7 @@ make_dropin()
 
 	# Unload our profile API functions
 	unset -f append_path
+	export SHELL="/usr/bin/zsh"
 	EOF
 	source $HOME/.bash_profile
 

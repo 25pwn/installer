@@ -1,7 +1,10 @@
 #!/bin/bash
 
 chsh -s "/usr/bin/zsh"
+# homectl update --shell="/usr/bin/zsh"
 tee $HOME/.zshrc << 'EOF' > /dev/null
+source "$HOME/.bash_profile"
+
 ## completion
 autoload -Uz compinit promptinit
 compinit
