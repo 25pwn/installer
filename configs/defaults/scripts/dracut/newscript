@@ -8,7 +8,7 @@ install
 compress
 ENDOFSCRIPT
 
-if [ use_disk_encryption -eq 1 ]; then
+if [ ${use_disk_encryption} -eq 1 ]; then
 	log "info" "Generating keyfile and configuring dracut to embed it in initramfs"
 	run_commands "arch-chroot" "root" <<- ENDOFSCRIPT
 	keypath="${keypath}"

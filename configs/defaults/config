@@ -102,7 +102,7 @@ pacman_repo_list="multilib" # g14
 	
 pkglist="${pkgs[@]}"
 
-if [ use_disk_encryption -eq 1 ]; then
+if [ ${use_disk_encryption} -eq 1 ]; then
 	pkglist+=" cryptsetup "
 fi
 
