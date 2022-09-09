@@ -11,7 +11,7 @@ Currently supports installing archlinux
 - Dependency system
 - Parallel install
 - Fedora Rawhide support
-- Disk encryption support
+- LUKS2 support
 - Update daemon
 
 ## Requirements
