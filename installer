@@ -230,7 +230,69 @@ run_script() # HYPERVISOR USER SCRIPT
 	ENDOFSCRIPT
 }
 
+run_new_scripts()
+{	
+	log "debug" "Running container_scripts scripts"
+	for script in $container_scripts; do
+		log "debug" "Running $script script"
+		scriptdir="$configdir/scripts/${script}"
+		if [ -r  "${scriptdir}/newscript" ]; then
+			source "${scriptdir}/newscript" \
+			|| log "error" "Failed to run $script"
+		else
+			run_script "systemd-nspawn" "root" "$script" \
+			|| log "error" "Failed to run $script"
+		fi
 
+	done
+	
+	log "debug" "Running user_container_scripts scripts"
+	for script in $user_container_scripts; do
+		log "debug" "Running $script script"
+		scriptdir="$configdir/scripts/${script}"
+		if [ -r  "${scriptdir}/newscript" ]; then
+			source "${scriptdir}/newscript" \
+			|| log "error" "Failed to run $script"
+		else
+			run_script "systemd-nspawn" "$username" "$script" \
+			|| log "error" "Failed to run $script"
+		fi
+	done
+	
+	log "debug" "Running arch_chroot_scripts scripts"
+	for script in $arch_chroot_scripts; do
+		log "debug" "Running $script script"
+		scriptdir="$configdir/scripts/${script}"
+		if [ -r  "${scriptdir}/newscript" ]; then
+			source "${scriptdir}/newscript" \
+			|| log "error" "Failed to run $script"
+		else
+			run_script "arch-chroot" "root" "$script" \
+			|| log "error" "Failed to run $script"
+		fi
+	done
+
+	log "debug" "Showing disk usage"
+	run_commands "systemd-nspawn" "root" <<- ENDOFSCRIPT
+	btrfs fi usage /
+	ENDOFSCRIPT
+}
+
+run_scripts()
+{
+	new_scripts=1
+	if [ "${new_scripts}" -eq "1" ]; then
+		start_container
+		run_new_scripts
+		poweroff_container
+	else
+		start_container
+		container_scripts
+		poweroff_container
+
+		arch-chroot_scripts
+	fi
+}
 
 install()
 {
@@ -240,11 +302,7 @@ install()
 
 	bootstrap_system
 
-	start_container
-	container_scripts
-	poweroff_container
-
-	arch-chroot_scripts
+	run_scripts
 
 	if [ "$verbosity" -ge "2" ]; then
 		log "debug" "Showing install size"
