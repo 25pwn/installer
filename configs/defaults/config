@@ -24,9 +24,13 @@ declare -A mountopts
 
 btrfssubvol="sys/$machinename"
 
-mountdev["/"]="" # /dev/loop0p1
+mountdev["/"]="" # /dev/mapper/ROOT
 mounttype["/"]="btrfs"
 mountopts["/"]="subvol=$btrfssubvol,compress=zstd:0"
+use_disk_encryption=1
+crypt_dev="" # /dev/loop0p3
+keypath="/boot/key"
+passphrase="" # passwd
 
 mountdev["/boot/efi"]="" # /dev/loop0p2
 mounttype["/boot/efi"]="vfat"
@@ -95,7 +99,12 @@ pacman_repo_list="multilib" # g14
 	pkgs[c_devel]="gcc clang make cmake git gdb lldb"
 	pkgs[vscode]="aur/visual-studio-code-bin gnome-keyring"
 	pkgs[obs]="obs-studio v4l2loopback-dkms"
+	
 pkglist="${pkgs[@]}"
+
+if [ use_disk_encryption -eq 1 ]; then
+	pkglist+=" cryptsetup "
+fi
 
 ## flatpak
 flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark" # com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles

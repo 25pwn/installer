@@ -1,8 +1,35 @@
 #!/bin/bash
 # run as: root
 # depends: dracut
-paru -Sy --needed --noconfirm dracut aur/dracut-hook
-sudo mkdir -p /etc/dracut.conf.d
-sudo tee /etc/dracut.conf.d/compress.conf << 'EOF' > /dev/null
-compress="zstd"
-EOF
+install()
+{
+	paru -Sy --needed --noconfirm dracut aur/dracut-hook
+}
+
+compress()
+{
+	sudo mkdir -p "/etc/dracut.conf.d"
+	sudo tee "/etc/dracut.conf.d/compress.conf" <<- 'EOF' > /dev/null
+	compress="zstd"
+	EOF
+}
+
+crypt()
+{
+	sudo mkdir -p "/etc/dracut.conf.d"
+	sudo tee "/etc/dracut.conf.d/crypt.conf" <<- 'EOF' > /dev/null
+	add_dracutmodules+=" crypt "
+	EOF
+}
+
+keyfile()
+{
+	sudo dd if="/dev/random" of="${keypath}" bs=1 count=4096
+	sudo chmod 0600 "${keypath}"
+	printf '%s' "${passphrase}" | sudo cryptsetup luksAddKey ${crypt_dev} /boot/key --key-file -
+	
+	sudo mkdir -p "/etc/dracut.conf.d"
+	sudo tee /etc/dracut.conf.d/keyfile.conf <<- EOF > /dev/null
+	install_items+=" ${keypath} "
+	EOF
+}

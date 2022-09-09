@@ -25,7 +25,23 @@ configure_grub_defaults()
 	cp "/etc/default/grub" "/etc/default/grub.backup"
 	tee -a /etc/default/grub <<- EOF > /dev/null
 	GRUB_DISTRIBUTOR="$machinename"
-	GRUB_CMDLINE_LINUX_DEFAULT=""
+	GRUB_PRELOAD_MODULES+=" part_gpt part_msdos "
+	EOF
+}
+
+configure_grub_luks1()
+{
+	tee -a /etc/default/grub <<- "EOF" > /dev/null
+	GRUB_CMDLINE_LINUX_DEFAULT+=" rd.luks=1 "
+	GRUB_PRELOAD_MODULES+=" luks "
+	GRUB_ENABLE_CRYPTODISK=y
+	EOF
+}
+
+configure_grub_luks1_keyfile()
+{
+	tee -a /etc/default/grub <<- EOF > /dev/null
+	GRUB_CMDLINE_LINUX_DEFAULT+=" rd.luks.key=${keypath} rd.luks.uuid=luks-$(cryptsetup luksUUID "${crypt_dev}") "
 	EOF
 }
 
@@ -38,6 +54,11 @@ postinstall()
 {
 	install_grub
 	configure_grub_defaults
+	if [ use_disk_encryption -eq 1 ]; then
+		configure_grub_luks1
+		configure_grub_luks1_keyfile
+	fi
+	install_grub
 	run_grub_mkconfig
 }
 postinstall
