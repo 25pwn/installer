@@ -1,12 +1,16 @@
 #!/bin/bash
 # echo mount ${mountdev[${mountpoint}]} ${mountpoint} -t ${mounttype[${mountpoint}]} -o ${mountopts[${mountpoint}]}
 for mountpoint in ${!mountdev[@]}; do
-	dev_uuid="$(lsblk -rno UUID ${mountdev[${mountpoint}]})"
+	dev_uuid="$(blkid ${mountdev[${mountpoint}]} -o value | head -n1)"
+	if [ "$dev_uuid" = "" ]; then
+		dev_uuid="$(lsblk -rno UUID ${mountdev[${mountpoint}]})"
+	fi
+
 	dev_id=""
-	if [ "$dev_uuid" != "" ]; then
-		dev_id="UUID=$dev_uuid"
-	else
+	if [ "$dev_uuid" = "" ]; then
 		dev_id="${mountdev[${mountpoint}]}"
+	else
+		dev_id="UUID=$dev_uuid"
 	fi
 	printf "%s\n" "$dev_id ${mountpoint} ${mounttype[${mountpoint}]} ${mountopts[${mountpoint}]}" | tee -a /etc/fstab > /dev/null
 done
