@@ -31,7 +31,7 @@ use_disk_encryption=1 # /dev/loop0p3
 crypt_name="ROOT"
 crypt_node="/dev/mapper/${crypt_name}"
 crypt_dev=""
-crypt_type="luks2"
+crypt_type="luks1"
 
 keypath="/boot/key"
 passphrase="" # passwd
