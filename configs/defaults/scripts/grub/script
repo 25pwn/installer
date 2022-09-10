@@ -38,7 +38,7 @@ configure_grub_luks1()
 	EOF
 }
 
-configure_grub_luks1_keyfile()
+configure_grub_luks_keyfile()
 {
 	tee -a /etc/default/grub <<- EOF > /dev/null
 	GRUB_CMDLINE_LINUX_DEFAULT+=" rd.luks.key=${keypath} rd.luks.uuid=luks-$(cryptsetup luksUUID "${crypt_dev}") "
@@ -47,18 +47,18 @@ configure_grub_luks1_keyfile()
 
 configure_grub_luks2()
 {
-	tee -a /etc/default/grub <<- "EOF" > /dev/null
-	GRUB_CMDLINE_LINUX_DEFAULT+=" rd.luks=1 "
+	tee -a "/etc/default/grub" <<- 'EOF' > /dev/null
+	GRUB_CMDLINE_LINUX+=" rd.luks=1 "
 	GRUB_PRELOAD_MODULES+=" luks2 "
 	GRUB_ENABLE_CRYPTODISK=y
 	EOF
 
-	sudo tee -a "/etc/grub.d/01_crypt" <<- 'EOF' > /dev/null
+	sudo tee -a "/etc/grub.d/01_crypt" <<- EOF > /dev/null
 	#!/bin/sh
-	echo "cryptomount -a"
+	echo "cryptomount -u $(cryptsetup luksUUID "${crypt_dev}" | tr -d -)"
 	EOF
 
-	chmod +x /etc/grub.d/01_crypt
+	chmod +x "/etc/grub.d/01_crypt"
 }
 
 run_grub_mkconfig()
@@ -70,8 +70,8 @@ postinstall()
 {
 	configure_grub_defaults
 	if [ ${use_disk_encryption} -eq 1 ]; then
-		configure_grub_luks1
-		configure_grub_luks1_keyfile
+		configure_grub_${crypt_type}
+		configure_grub_luks_keyfile
 	fi
 	install_grub
 	run_grub_mkconfig

@@ -83,6 +83,11 @@ setup_mounts()
 	root_mnt="/var/lib/machines/$machinename"
 	randomid="$(printf '%05d' $RANDOM)" # used to create mountpoints to avoid collisions
 
+	if [ ${use_disk_encryption} -eq 1 ]; then
+		log "debug" "Opening $root_dev"
+		printf '%s' "${passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
+	fi
+
 	for mountpoint in ${!mountdev[@]}; do
 		mkdir -p "${root_mnt}"/"${mountpoint}"
 		mount "${mountdev[${mountpoint}]}" "$root_mnt/${mountpoint}" \
@@ -101,6 +106,11 @@ cleanup_mounts()
 	umount -R "$root_mnt"
 	log "debug" "Removing mountpoint $root_mnt"
 	rm -d "$root_mnt"
+
+	if [ ${use_disk_encryption} -eq 1 ]; then
+		log "debug" "Closing $root_dev"
+		cryptsetup close "${crypt_name}"
+	fi
 }
 
 bootstrap_system()

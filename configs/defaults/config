@@ -24,13 +24,22 @@ declare -A mountopts
 
 btrfssubvol="sys/$machinename"
 
-mountdev["/"]="" # /dev/mapper/ROOT
-mounttype["/"]="btrfs"
-mountopts["/"]="subvol=$btrfssubvol,compress=zstd:0"
-use_disk_encryption=1
-crypt_dev="" # /dev/loop0p3
+autopart=1
+autopart_dev=""
+
+use_disk_encryption=1 # /dev/loop0p3
+crypt_name="ROOT"
+crypt_node="/dev/mapper/${crypt_name}"
+crypt_dev=""
+crypt_type="luks2"
+
 keypath="/boot/key"
 passphrase="" # passwd
+
+
+mountdev["/"]="${crypt_node}" # /dev/mapper/ROOT
+mounttype["/"]="btrfs"
+mountopts["/"]="subvol=$btrfssubvol,compress=zstd:0"
 
 mountdev["/boot/efi"]="" # /dev/loop0p2
 mounttype["/boot/efi"]="vfat"
