@@ -1,0 +1,6 @@
+#!/bin/bash
+log "info" "Installing packages"
+run_commands "systemd-nspawn" "${username}" <<- ENDOFSCRIPT
+pkglist="${pkglist}"
+$(cat "${scriptdir}/script")
+ENDOFSCRIPT

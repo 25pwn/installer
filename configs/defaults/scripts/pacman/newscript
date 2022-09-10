@@ -1,0 +1,6 @@
+#!/bin/bash
+log "info" "Configuring pacman"
+run_commands "systemd-nspawn" "root" <<- ENDOFSCRIPT
+pacman_repo_list="${pacman_repo_list}"
+$(cat "${scriptdir}/script")
+ENDOFSCRIPT

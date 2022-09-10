@@ -1,0 +1,6 @@
+#!/bin/bash
+log "info" "Installing pip and pip packages"
+run_commands "systemd-nspawn" "${username}" <<- ENDOFSCRIPT
+pip_pkglist="${pip_pkglist}"
+$(cat "${scriptdir}/script")
+ENDOFSCRIPT

@@ -1,0 +1,6 @@
+#!/bin/bash
+log "info" "Configuring flatpak and installing packages"
+run_commands "systemd-nspawn" "${username}" <<- ENDOFSCRIPT
+flatpak_pkglist="${flatpak_pkglist}"
+$(cat "${scriptdir}/script")
+ENDOFSCRIPT

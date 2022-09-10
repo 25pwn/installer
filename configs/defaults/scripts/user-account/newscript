@@ -1,0 +1,7 @@
+#!/bin/bash
+log "info" "Creating user account"
+run_commands "systemd-nspawn" "root" <<- ENDOFSCRIPT
+username="${username}"
+$(cat "${scriptdir}/script")
+createuser
+ENDOFSCRIPT
