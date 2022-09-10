@@ -160,41 +160,6 @@ generate_script() # SCRIPT
 	ENDOFSCRIPT
 }
 
-container_scripts()
-{
-	# machinectl shell "root"@"$machinename"
-	# machinectl shell "$username"@"$machinename"
-	# systemctl status "systemd-nspawn@$machinename"
-	
-	log "debug" "Running container_scripts scripts"
-	for script in $container_scripts; do
-		log "debug" "Running $script script in container"
-		run_script "systemd-nspawn" "root" "$script" \
-		|| log "error" "Failed to run $script in container"
-	done
-
-	log "debug" "Running user_container_scripts scripts"
-	for script in $user_container_scripts; do
-		log "debug" "Running $script script in container"
-		run_script "systemd-nspawn" "$username" "$script" \
-		|| log "error" "Failed to run $script in container"
-	done
-
-	log "debug" "Showing disk usage"
-	run_commands "root" "$machinename" <<- ENDOFSCRIPT
-	btrfs fi usage /
-	ENDOFSCRIPT
-}
-
-arch-chroot_scripts()
-{
-	for script in $arch_chroot_scripts; do
-		log "debug" "Running $script script in arch-chroot"
-		run_script "arch-chroot" "root" "$script" \
-		|| log "error" "Failed to run $script in arch-chroot"
-	done
-}
-
 run_commands() # HYPERVISOR USER < COMMANDS
 {
 	case $1 in
@@ -278,22 +243,6 @@ run_new_scripts()
 	ENDOFSCRIPT
 }
 
-run_scripts()
-{
-	new_scripts=1
-	if [ "${new_scripts}" -eq "1" ]; then
-		start_container
-		run_new_scripts
-		poweroff_container
-	else
-		start_container
-		container_scripts
-		poweroff_container
-
-		arch-chroot_scripts
-	fi
-}
-
 install()
 {
 	log "info" "Starting install"
@@ -302,7 +251,9 @@ install()
 
 	bootstrap_system
 
-	run_scripts
+	start_container
+	run_new_scripts
+	poweroff_container
 
 	if [ "$verbosity" -ge "2" ]; then
 		log "debug" "Showing install size"
