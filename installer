@@ -384,7 +384,9 @@ parse_args() # ACTION CONFIG
     	log "error" "Insufficient configuration"
 	fi
 
-
+	if [ ${verbosity} -ge 3 ]; then
+		set -x
+	fi
 
 	if [ "$sourced" == 0 ]; then
 		setup_script
