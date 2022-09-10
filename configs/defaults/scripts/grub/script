@@ -7,11 +7,11 @@ install_grub()
 		removable="--removable"
 	fi
 	
-	if [ -e "${mountdev[/boot/efi]}" ]; then
-		grub-install --target="x86_64-efi" --efi-directory=/boot/efi --boot-directory=/boot/efi/EFI --bootloader-id="GRUB" $removable --no-nvram --force
+	if [ -e "${mountdev["/boot/efi"]}" ]; then
+		grub-install --target="x86_64-efi" --efi-directory="/boot/efi" --boot-directory="/boot/efi/EFI" --bootloader-id="GRUB" ${removable} --no-nvram --force
 	fi
-	if [ -e "$bios_dev" ]; then
-		grub-install --target="i386-pc" --boot-directory=/boot/efi/EFI "$bios_dev" --force
+	if [ -e "${bios_dev}" ]; then
+		grub-install --target="i386-pc" --boot-directory="/boot/efi/EFI" "${bios_dev}" --force
 	fi
 	# i386-coreboot
 }
@@ -24,15 +24,125 @@ configure_grub_defaults()
 	fi
 	cp "/etc/default/grub" "/etc/default/grub.backup"
 	tee -a /etc/default/grub <<- EOF > /dev/null
-	GRUB_DISTRIBUTOR="$machinename"
+	GRUB_DISTRIBUTOR="${machinename}"
 	GRUB_PRELOAD_MODULES+=" part_gpt part_msdos "
+	GRUB_TIMEOUT=2
+	GRUB_TIMEOUT_STYLE='menu'
 	EOF
+}
+
+configure_grub_os_prober()
+{
+	tee -a /etc/default/grub <<- 'EOF' > /dev/null
+	GRUB_DISABLE_OS_PROBER=false
+	EOF
+}
+
+configure_grub_disable_submenu()
+{
+	tee -a /etc/default/grub <<- 'EOF' > /dev/null
+	GRUB_DISABLE_SUBMENU=y
+	EOF
+}
+
+configure_grub_shift_for_menu()
+{
+	tee -a /etc/default/grub <<- 'EOF' > /dev/null
+	GRUB_FORCE_HIDDEN_MENU="true"
+	EOF
+
+	tee -a /etc/grub.d/31_hold_shift <<- 'EOS' > /dev/null
+	#! /bin/sh
+	set -e
+
+	prefix="/usr"
+	exec_prefix="${prefix}"
+	datarootdir="${prefix}/share"
+
+	export TEXTDOMAIN=grub
+	export TEXTDOMAINDIR="${datarootdir}/locale"
+	source "${datarootdir}/grub/grub-mkconfig_lib"
+
+	found_other_os=
+
+	make_timeout () {
+
+	if [ "x${GRUB_FORCE_HIDDEN_MENU}" = "xtrue" ] ; then 
+		if [ "x${1}" != "x" ] ; then
+		if [ "x${GRUB_HIDDEN_TIMEOUT_QUIET}" = "xtrue" ] ; then
+		verbose=
+		else
+		verbose=" --verbose"
+		fi
+
+		if [ "x${1}" = "x0" ] ; then
+		cat <<EOF
+	if [ "x\${timeout}" != "x-1" ]; then
+	if keystatus; then
+		if keystatus --shift; then
+		set timeout=-1
+		else
+		set timeout=0
+		fi
+	else
+		if sleep$verbose --interruptible 3 ; then
+		set timeout=0
+		fi
+	fi
+	fi
+	EOF
+		else
+		cat << EOF
+	if [ "x\${timeout}" != "x-1" ]; then
+	if sleep$verbose --interruptible ${GRUB_HIDDEN_TIMEOUT} ; then
+		set timeout=0
+	fi
+	fi
+	EOF
+		fi
+		fi
+	fi
+	}
+
+	adjust_timeout () {
+	if [ "x$GRUB_BUTTON_CMOS_ADDRESS" != "x" ]; then
+		cat <<EOF
+	if cmostest $GRUB_BUTTON_CMOS_ADDRESS ; then
+	EOF
+		make_timeout "${GRUB_HIDDEN_TIMEOUT_BUTTON}" "${GRUB_TIMEOUT_BUTTON}"
+		echo else
+		make_timeout "${GRUB_HIDDEN_TIMEOUT}" "${GRUB_TIMEOUT}"
+		echo fi
+	else
+		make_timeout "${GRUB_HIDDEN_TIMEOUT}" "${GRUB_TIMEOUT}"
+	fi
+	}
+
+	adjust_timeout
+
+		cat <<EOF
+	if [ "x\${timeout}" != "x-1" ]; then
+	if keystatus; then
+		if keystatus --shift; then
+		set timeout=-1
+		else
+		set timeout=0
+		fi
+	else
+		if sleep$verbose --interruptible 3 ; then
+		set timeout=0
+		fi
+	fi
+	fi
+	EOF
+	EOS
+	chmod +x /etc/grub.d/31_hold_shift
 }
 
 configure_grub_luks1()
 {
-	tee -a /etc/default/grub <<- "EOF" > /dev/null
-	GRUB_CMDLINE_LINUX_DEFAULT+=" rd.luks=1 "
+	tee -a "/etc/default/grub" <<- 'EOF' > /dev/null
+	GRUB_CMDLINE_LINUX+=" rd.luks=1 "
 	GRUB_PRELOAD_MODULES+=" luks "
 	GRUB_ENABLE_CRYPTODISK=y
 	EOF
@@ -40,8 +150,8 @@ configure_grub_luks1()
 
 configure_grub_luks_keyfile()
 {
-	tee -a /etc/default/grub <<- EOF > /dev/null
-	GRUB_CMDLINE_LINUX_DEFAULT+=" rd.luks.key=${keypath} rd.luks.uuid=luks-$(cryptsetup luksUUID "${crypt_dev}") "
+	tee -a "/etc/default/grub" <<- EOF > /dev/null
+	GRUB_CMDLINE_LINUX+=" rd.luks.key=${keypath} rd.luks.uuid=luks-$(cryptsetup luksUUID "${crypt_dev}") "
 	EOF
 }
 
@@ -63,7 +173,7 @@ configure_grub_luks2()
 
 run_grub_mkconfig()
 {
-	grub-mkconfig -o /boot/efi/EFI/grub/grub.cfg
+	grub-mkconfig -o "/boot/efi/EFI/grub/grub.cfg"
 }
 
 postinstall()
