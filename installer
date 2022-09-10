@@ -148,18 +148,6 @@ poweroff_container()
 	rm -f "/etc/systemd/nspawn/$machinename.nspawn"
 }
 
-
-
-
-generate_script() # SCRIPT
-{
-	cat <<- ENDOFSCRIPT
-	${default_config_contents}
-	${config_contents}
-	$(cat "$configdir/scripts/$1/script")
-	ENDOFSCRIPT
-}
-
 run_commands() # HYPERVISOR USER < COMMANDS
 {
 	case $1 in
@@ -191,7 +179,7 @@ run_commands() # HYPERVISOR USER < COMMANDS
 run_script() # HYPERVISOR USER SCRIPT
 {
 	run_commands $1 $2 <<-ENDOFSCRIPT
-	$(generate_script $script)
+	$(cat "$configdir/scripts/$3/script")
 	ENDOFSCRIPT
 }
 
