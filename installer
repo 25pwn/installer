@@ -114,7 +114,7 @@ run_autopart()
 {
 	log "info" "Running autopart"
 	
-	if [ ${crypt_erase} -eq 1 ]
+	if [ ${crypt_erase} -eq 1 ]; then
 		log "info" "Wiping device"
 		pv --progress --timer --eta --rate --bytes --stop-at-size -s "$(blockdev --getsize64 "${autopart_dev}")" "${crypt_erase_source}" > "${autopart_dev}"
 	fi
