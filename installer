@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 print() # COLOR TEXT
 {
@@ -160,6 +161,11 @@ poweroff_container()
 
 run_commands() # HYPERVISOR USER < COMMANDS
 {
+	if [ ${verbosity} -ge 3 ]; then
+		prefix_commands='set -xe'
+	else
+		prefix_commands='set -e'
+	fi
 	case $1 in
 		"arch-chroot")
 			if [ "$2" != "root" ]; then
@@ -169,6 +175,7 @@ run_commands() # HYPERVISOR USER < COMMANDS
 			arch-chroot \
 			$userarg "$root_mnt" \
 			bash <<- ENDOFSCRIPT
+			${prefix_commands}
 			$(cat /dev/stdin)
 			ENDOFSCRIPT
 			;;
@@ -180,6 +187,7 @@ run_commands() # HYPERVISOR USER < COMMANDS
 			systemd-run \
 			$userflag -PM "$2"@"$machinename" \
 			bash <<- ENDOFSCRIPT
+			${prefix_commands}
 			$(cat /dev/stdin)
 			ENDOFSCRIPT
 			;;
@@ -395,7 +403,7 @@ parse_args() # ACTION CONFIG
 	fi
 
 	if [ ${verbosity} -ge 3 ]; then
-		set -x
+		set -xe
 	fi
 
 	if [ "$sourced" == 0 ]; then
