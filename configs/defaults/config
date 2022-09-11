@@ -15,6 +15,8 @@ autopart=1
 autopart_dev="" # /dev/loop0
 
 use_disk_encryption=1
+crypt_erase=0
+crypt_erase_source="/dev/urandom"
 crypt_name="ROOT"
 crypt_dev="" # /dev/loop0p3
 crypt_type="luks1"

@@ -113,6 +113,12 @@ autopart_set_vars()
 run_autopart()
 {
 	log "info" "Running autopart"
+	
+	if [ ${crypt_erase} -eq 1 ]
+		log "info" "Wiping device"
+		pv --progress --timer --eta --rate --bytes --stop-at-size -s "$(blockdev --getsize64 "${autopart_dev}")" "${crypt_erase_source}" > "${autopart_dev}"
+	fi
+
 	log "debug" "Partitioning device"
 	sgdisk -Z "${autopart_dev}"
 	sgdisk -o "${autopart_dev}"
