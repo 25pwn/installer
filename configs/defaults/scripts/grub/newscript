@@ -14,5 +14,6 @@ machinename=${machinename}
 grub_bios_dev=${grub_bios_dev}
 grub_efi=${grub_efi}
 grub_removable=${grub_removable}
+grub_update_nvram=${grub_update_nvram}
 $(cat "${scriptdir}/script")
 ENDOFSCRIPT

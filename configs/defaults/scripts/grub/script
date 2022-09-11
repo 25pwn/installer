@@ -6,9 +6,13 @@ install_grub()
 	if [ ${grub_removable} -eq 1 ]; then
 		removable="--removable"
 	fi
+
+	if [ ${grub_update_nvram} -eq 0 ]; then
+		no_nvram="--no-nvram"
+	fi
 	
 	if [ ${grub_efi} -eq 1 ]; then
-		grub-install --target="x86_64-efi" --efi-directory="/boot/efi" --boot-directory="/boot/efi/EFI" --bootloader-id="GRUB" ${removable} --no-nvram --force
+		grub-install --target="x86_64-efi" --efi-directory="/boot/efi" --boot-directory="/boot/efi/EFI" --bootloader-id="GRUB" ${removable} ${no_nvram} --force
 	fi
 	
 	if [ -e "${grub_bios_dev}" ]; then

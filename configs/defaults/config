@@ -40,6 +40,7 @@ mounts_opts+=("defaults")
 grub_efi=1
 grub_bios_dev="" # /dev/loop0
 grub_removable=0
+grub_update_nvram=1
 
 username="user" # user
 
