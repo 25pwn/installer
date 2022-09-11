@@ -72,3 +72,4 @@ configure()
 	[[ -n "${key[Control-Right]}" ]] && bindkey -- "${key[Control-Right]}" forward-word
 	EOF
 }
+configure
