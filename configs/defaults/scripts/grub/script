@@ -3,15 +3,16 @@
 
 install_grub()
 {
-	if [ ! -f /boot/efi/EFI/Boot/boot*.efi ]; then
+	if [ ${grub_removable} -eq 1 ]; then
 		removable="--removable"
 	fi
 	
-	if [ -e "${mountdev["/boot/efi"]}" ]; then
+	if [ ${grub_efi} -eq 1 ]; then
 		grub-install --target="x86_64-efi" --efi-directory="/boot/efi" --boot-directory="/boot/efi/EFI" --bootloader-id="GRUB" ${removable} --no-nvram --force
 	fi
-	if [ -e "${bios_dev}" ]; then
-		grub-install --target="i386-pc" --boot-directory="/boot/efi/EFI" "${bios_dev}" --force
+	
+	if [ -e "${grub_bios_dev}" ]; then
+		grub-install --target="i386-pc" --boot-directory="/boot/efi/EFI" "${grub_bios_dev}" --force
 	fi
 	# i386-coreboot
 }
@@ -159,16 +160,16 @@ configure_grub_luks2()
 {
 	tee -a "/etc/default/grub" <<- 'EOF' > /dev/null
 	GRUB_CMDLINE_LINUX+=" rd.luks=1 "
-	GRUB_PRELOAD_MODULES+=" luks2 "
+	GRUB_PRELOAD_MODULES+=" luks luks2 "
 	GRUB_ENABLE_CRYPTODISK=y
 	EOF
 
-	sudo tee -a "/etc/grub.d/01_crypt" <<- EOF > /dev/null
-	#!/bin/sh
-	echo "cryptomount -u $(cryptsetup luksUUID "${crypt_dev}" | tr -d -)"
-	EOF
-
-	chmod +x "/etc/grub.d/01_crypt"
+	#sudo tee -a "/etc/grub.d/01_crypt" <<- EOF > /dev/null
+	##!/bin/sh
+	#echo "cryptomount -u $(cryptsetup luksUUID "${crypt_dev}" | tr -d -)"
+	#EOF
+	#
+	#chmod +x "/etc/grub.d/01_crypt"
 }
 
 run_grub_mkconfig()

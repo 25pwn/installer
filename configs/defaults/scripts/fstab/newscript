@@ -1,10 +1,10 @@
 #!/bin/bash
 log "info" "Generating fstab"
 run_commands "arch-chroot" "root" <<- ENDOFSCRIPT
-${default_config_contents}
-${config_contents}
-# mountdev=${mountdev}
-# mounttype=${mounttype}
-# mountopts=${mountopts}
+mounts_points=(${mounts_points[@]})
+mounts_devices=(${mounts_devices[@]})
+mounts_types=(${mounts_types[@]})
+mounts_opts=(${mounts_opts[@]})
+
 $(cat "${scriptdir}/script")
 ENDOFSCRIPT

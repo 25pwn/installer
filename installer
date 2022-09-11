@@ -78,8 +78,86 @@ get_script_prefix()
 	printf "%s" "$DIR"
 }
 
+autopart_set_vars()
+{
+	log "debug" "Retrieving child nodes"
+	autopart_dev_list=( $(lsblk ${autopart_dev} -o NAME -ln) )
+	efi_dev="/dev/${autopart_dev_list[2]}"
+	root_dev="/dev/${autopart_dev_list[3]}"
+
+	if [ ${use_disk_encryption} -eq 1 ]; then
+		crypt_dev=${root_dev}
+		root_dev="/dev/mapper/${crypt_name}"
+		mounts_devices[0]="${root_dev}"
+	fi
+
+	mounts_points=()
+	mounts_devices=()
+	mounts_types=()
+	mounts_opts=()
+
+	mounts_points+=("/")
+	mounts_devices+=("${root_dev}")
+	mounts_types+=("btrfs")
+	mounts_opts+=("subvol=$btrfssubvol,compress=zstd:0")
+
+	mounts_points+=("/boot/efi")
+	mounts_devices+=("${efi_dev}")
+	mounts_types+=("vfat")
+	mounts_opts+=("defaults")
+}
+
+run_autopart()
+{
+	log "info" "Running autopart"
+	log "debug" "Partitioning device"
+	sgdisk -Z "${autopart_dev}"
+	sgdisk -o "${autopart_dev}"
+	sgdisk \
+		--new=1:0:+1MiB --typecode=1:ef02 \
+		--new=2:0:+128MiB   --typecode=2:EF00 --change-name=2:EFI \
+		--new=3:0:0       --typecode=3:8300 --change-name=3:ROOT \
+		"${autopart_dev}"
+	log "debug" "Running partprobe"
+	partprobe "${autopart_dev}"
+
+	log "debug" "Retrieving child nodes"
+	autopart_dev_list=( $(lsblk ${autopart_dev} -o NAME -ln) )
+	efi_dev="/dev/${autopart_dev_list[2]}"
+	root_dev="/dev/${autopart_dev_list[3]}"
+
+	log "debug" "Creating EFI system partition"
+	mkfs.vfat -F 32 "${efi_dev}"
+
+	if [ ${use_disk_encryption} -eq 1 ]; then
+		log "debug" "Creating LUKS partition"
+		crypt_dev=${root_dev}
+		root_dev="/dev/mapper/${crypt_name}"
+		mounts_devices[0]="${root_dev}"
+		printf '%s' "${passphrase}" | cryptsetup luksFormat --type "${crypt_type}" --pbkdf pbkdf2 "${crypt_dev}" --key-file -
+		printf '%s' "${passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
+	fi
+
+	log "debug" "Creating BTRFS filesystem"
+	mkfs.btrfs -f "${root_dev}"
+
+	log "debug" "Creating BTRFS subvolume"
+	temp_mountdir="/tmp/installer_mnt"
+	mkdir -p "${temp_mountdir}"
+	mount "${root_dev}" "${temp_mountdir}" -o compress=zstd:0
+	mkdir -p "$(dirname "${temp_mountdir}/${btrfssubvol}")"
+	btrfs subvol create "${temp_mountdir}/${btrfssubvol}"
+	umount "${root_dev}"
+	rm -d "${temp_mountdir}"
+
+	log "debug" "Closing LUKS partition"
+	cryptsetup close "${crypt_name}"
+}
+
 setup_mounts()
 {
+	
+	
 	log "debug" "Setting up mounts"
 	root_mnt="/var/lib/machines/$machinename"
 	randomid="$(printf '%05d' $RANDOM)" # used to create mountpoints to avoid collisions
@@ -89,12 +167,17 @@ setup_mounts()
 		printf '%s' "${passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
 	fi
 
-	for mountpoint in ${!mountdev[@]}; do
-		mkdir -p "${root_mnt}"/"${mountpoint}"
-		mount "${mountdev[${mountpoint}]}" "$root_mnt/${mountpoint}" \
-		 -t "${mounttype[${mountpoint}]}" -o "${mountopts[${mountpoint}]}" \
-		&& log "debug" "Mounted ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint" \
-		|| log "error" "Failed to mount ${mountdev[${mountpoint}]} to $root_mnt/$mountpoint"
+	for current_mounts_index in ${!mounts_points[@]}; do
+		current_mounts_point="${mounts_points[${current_mounts_index}]}"
+		current_mounts_device="${mounts_devices[${current_mounts_index}]}"
+		current_mounts_type="${mounts_types[${current_mounts_index}]}"
+		current_mounts_opt="${mounts_opts[${current_mounts_index}]}"
+		
+		mkdir -p "${root_mnt}"/"${current_mounts_point}"
+		mount "${current_mounts_device}" "$root_mnt/${current_mounts_point}" \
+			-t "${current_mounts_type}" -o "${current_mounts_opt}" \
+				&& log "debug" "Mounted ${current_mounts_device} to ${current_mounts_point}" \
+				|| log "error" "Failed to mount ${current_mounts_device} to ${current_mounts_point}"
 	done
 }
 cleanup_mounts()
@@ -253,6 +336,10 @@ install()
 {
 	log "info" "Starting install"
 
+	if [ ${autopart} -eq 1 ]; then
+		run_autopart
+	fi
+
 	setup_mounts
 
 	bootstrap_system
@@ -275,20 +362,19 @@ uninstall()
 {
 	log "info" "Starting uninstall"
 
+	if [ ${autopart} -eq 1 ]; then
+		autopart_set_vars
+	fi
 	setup_mounts
 
-	if [ -e "${mountdev[/boot/efi]}" ]; then
-		log "debug" "Clearing EFI"
-		rm -rf "$root_mnt/boot/efi/EFI/grub"
-		log "debug" "Unmounting EFI"
-		umount "$root_mnt/boot/efi/"
-	fi
+	for ((i=${#mounts_points[@]}-1; i>=0; i--)); do
+		log "debug" "Clearing ${mounts_points[${i}]}"
+		rm -rf "${root_mnt}/${mounts_points[${i}]}"
+		log "debug" "Unmounting ${mounts_points[${i}]}"
+		umount "${root_mnt}/${mounts_points[${i}]}"
+	done
 
-	log "debug" "Clearing root"
-	rm -rf "$root_mnt/"*
-	log "debug" "Unmounting root" 
-	umount "$root_mnt/"
-	rm -d "$root_mnt"
+	rm -d "${root_mnt}"
 
 	cleanup_mounts
 
@@ -305,6 +391,9 @@ reinstall()
 
 nshell()
 {
+	if [ ${autopart} -eq 1 ]; then
+		autopart_set_vars
+	fi
 	setup_mounts
 	start_container
 	log "info" "Entering container"
@@ -316,6 +405,9 @@ nshell()
 
 cshell()
 {
+	if [ ${autopart} -eq 1 ]; then
+		autopart_set_vars
+	fi
 	setup_mounts
 	log "info" "Entering chroot"
 	arch-chroot "$root_mnt" bash

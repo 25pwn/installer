@@ -1,16 +1,24 @@
 #!/bin/bash
-# echo mount ${mountdev[${mountpoint}]} ${mountpoint} -t ${mounttype[${mountpoint}]} -o ${mountopts[${mountpoint}]}
-for mountpoint in ${!mountdev[@]}; do
-	dev_uuid="$(blkid ${mountdev[${mountpoint}]} -s UUID -o value)"
-	if [ "$dev_uuid" = "" ]; then
-		dev_uuid="$(lsblk -rno UUID ${mountdev[${mountpoint}]})"
-	fi
+generate_fstab()
+{
+	for current_mounts_index in ${!mounts_points[@]}; do
+		current_mounts_point="${mounts_points[${current_mounts_index}]}"
+		current_mounts_device="${mounts_devices[${current_mounts_index}]}"
+		current_mounts_type="${mounts_types[${current_mounts_index}]}"
+		current_mounts_opt="${mounts_opts[${current_mounts_index}]}"
+		
+		fstab_dev_uuid="$(blkid ${current_mounts_device} -s UUID -o value)"
+		if [ "$fstab_dev_uuid" = "" ]; then
+			fstab_dev_uuid="$(lsblk -rno UUID ${current_mounts_device})"
+		fi
 
-	dev_id=""
-	if [ "$dev_uuid" = "" ]; then
-		dev_id="${mountdev[${mountpoint}]}"
-	else
-		dev_id="UUID=$dev_uuid"
-	fi
-	printf "%s\n" "$dev_id ${mountpoint} ${mounttype[${mountpoint}]} ${mountopts[${mountpoint}]}" | tee -a "/etc/fstab" > /dev/null
-done
+		if [ "$fstab_dev_uuid" = "" ]; then
+			fstab_dev_id="${current_mounts_device}"
+		else
+			fstab_dev_id="UUID=$fstab_dev_uuid"
+		fi
+
+		printf "%s\n" "${fstab_dev_id} ${current_mounts_point} ${current_mounts_type} ${current_mounts_opt}" | tee -a "/etc/fstab" > /dev/null
+	done
+}
+generate_fstab
