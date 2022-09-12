@@ -7,7 +7,7 @@ configure()
 	fi
 	
 	# homectl update --shell="/usr/bin/zsh"
-	tee $HOME/.zshrc <<- 'EOF' > /dev/null
+	tee "$HOME/.zshrc" <<- 'EOF' > /dev/null
 	source "$HOME/.bash_profile"
 
 	## completion
