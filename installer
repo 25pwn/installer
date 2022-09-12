@@ -1,9 +1,38 @@
 #!/bin/bash
-set -e
-
-print() # COLOR TEXT
+set -ex
+log() # LEVEL TEXT
 {
-	case $1 in
+	local log_level="${1}"
+	local log_text="${2}"
+
+	local log_text_color
+	case "${log_level}" in
+		"debug")
+			if [ ${verbosity} -ge 2 ]; then
+				log_text_color="GREEN"
+			else
+				return
+			fi
+			;;
+		"info")
+			if [ ${verbosity} -ge 1 ]; then
+				log_text_color="LGREEN"
+			else
+				return
+			fi
+			;;
+		"warning")
+			log_text_color="LYELLOW"
+			;;
+		"error")
+			log_text_color="LRED"
+			;;
+		*)
+			log "warning" "Invalid log level ${log_level}"
+	esac
+	unset log_level
+
+	case ${log_text_color} in
 		"DEFAULT")
 			COLORCODE='\e[0m'
 			;;
@@ -32,30 +61,9 @@ print() # COLOR TEXT
 			COLORCODE='\e[94m'
 			;;
 	esac
-	printf "${COLORCODE}%s\e[0m\n" "$2"
-}
+	unset log_text_color
 
-log() # LEVEL TEXT
-{
-	case $1 in
-		"debug")
-			if [ "$verbosity" -ge "2" ]; then
-				print "GREEN" "$2"
-			fi
-			;;
-		"info")
-			if [ "$verbosity" -ge "1" ]; then
-				print "LGREEN" "$2"
-			fi
-			;;
-		"warning")
-			print "LYELLOW" "$2"
-			;;
-		"error")
-			print "LRED" "$2"
-			exit 1
-			;;
-	esac
+	printf "${COLORCODE}%s\e[0m\n" "${log_text}"
 }
 
 prefixoutput() # OUTPUT
@@ -81,9 +89,10 @@ get_script_prefix()
 autopart_set_vars()
 {
 	log "debug" "Retrieving child nodes"
-	autopart_dev_list=( $(lsblk ${autopart_dev} -o NAME -ln) )
+	local autopart_dev_list=( $(lsblk ${autopart_dev} -o NAME -ln) )
 	efi_dev="/dev/${autopart_dev_list[2]}"
 	root_dev="/dev/${autopart_dev_list[3]}"
+	unset autopart_dev_list
 
 	if [ ${use_disk_encryption} -eq 1 ]; then
 		crypt_dev=${root_dev}
@@ -127,13 +136,15 @@ run_autopart()
 		--new=2:0:+128MiB   --typecode=2:EF00 --change-name=2:EFI \
 		--new=3:0:0       --typecode=3:8300 --change-name=3:ROOT \
 		"${autopart_dev}"
+
 	log "debug" "Running partprobe"
 	partprobe "${autopart_dev}"
 
 	log "debug" "Retrieving child nodes"
-	autopart_dev_list=( $(lsblk ${autopart_dev} -o NAME -ln) )
+	local autopart_dev_list=( $(lsblk ${autopart_dev} -o NAME -ln) )
 	efi_dev="/dev/${autopart_dev_list[2]}"
 	root_dev="/dev/${autopart_dev_list[3]}"
+	unset autopart_dev_list
 
 	log "debug" "Creating EFI system partition"
 	mkfs.vfat -F 32 "${efi_dev}"
@@ -145,22 +156,30 @@ run_autopart()
 		mounts_devices[0]="${root_dev}"
 		printf '%s' "${passphrase}" | cryptsetup luksFormat --type "${crypt_type}" --pbkdf pbkdf2 "${crypt_dev}" --key-file -
 		printf '%s' "${passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
+		opened_cryptodisks+=("${crypt_name}")
 	fi
 
 	log "debug" "Creating BTRFS filesystem"
 	mkfs.btrfs -f "${root_dev}"
 
 	log "debug" "Creating BTRFS subvolume"
-	temp_mountdir="/tmp/installer_mnt"
+	local temp_mountdir="/tmp/installer_mnt"
+	created_mountpoints+=("${temp_mountdir}")
 	mkdir -p "${temp_mountdir}"
 	mount "${root_dev}" "${temp_mountdir}" -o compress=zstd:0
+	mounted_mountpoints+=("${root_dev}")
 	mkdir -p "$(dirname "${temp_mountdir}/${btrfssubvol}")"
 	btrfs subvol create "${temp_mountdir}/${btrfssubvol}"
 	umount "${root_dev}"
+	unset mounted_mountpoints[-1]
+
 	rm -d "${temp_mountdir}"
+	unset temp_mountdir
+	unset created_mountpoints[-1]
 
 	log "debug" "Closing LUKS partition"
 	cryptsetup close "${crypt_name}"
+	unset opened_cryptodisks[-1]
 
 	grub_efi=1
 	grub_bios_dev="${autopart_dev}"
@@ -183,44 +202,66 @@ run_autopart()
 
 setup_mounts()
 {
-	
-	
 	log "debug" "Setting up mounts"
-	root_mnt="/var/lib/machines/$machinename"
-	randomid="$(printf '%05d' $RANDOM)" # used to create mountpoints to avoid collisions
+	installer_root_mount="/var/lib/machines/${machinename}"
+	created_mountpoints+=("${installer_root_mount}")
+	local randomid="$(printf '%05d' $RANDOM)" # used to create mountpoints to avoid collisions
 
 	if [ ${use_disk_encryption} -eq 1 ]; then
-		log "debug" "Opening $root_dev"
+		log "debug" "Opening ${root_dev}"
 		printf '%s' "${passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
+		opened_cryptodisks+=("${crypt_name}")
 	fi
 
 	for current_mounts_index in ${!mounts_points[@]}; do
-		current_mounts_point="${mounts_points[${current_mounts_index}]}"
-		current_mounts_device="${mounts_devices[${current_mounts_index}]}"
-		current_mounts_type="${mounts_types[${current_mounts_index}]}"
-		current_mounts_opt="${mounts_opts[${current_mounts_index}]}"
+		local current_mounts_point="${mounts_points[${current_mounts_index}]}"
+		local current_mounts_device="${mounts_devices[${current_mounts_index}]}"
+		local current_mounts_type="${mounts_types[${current_mounts_index}]}"
+		local current_mounts_opt="${mounts_opts[${current_mounts_index}]}"
 		
-		mkdir -p "${root_mnt}"/"${current_mounts_point}"
-		mount "${current_mounts_device}" "$root_mnt/${current_mounts_point}" \
+		mkdir -p "${installer_root_mount}"/"${current_mounts_point}"
+		(mount "${current_mounts_device}" "$installer_root_mount/${current_mounts_point}" \
 			-t "${current_mounts_type}" -o "${current_mounts_opt}" \
-				&& log "debug" "Mounted ${current_mounts_device} to ${current_mounts_point}" \
-				|| log "error" "Failed to mount ${current_mounts_device} to ${current_mounts_point}"
+				&& log "debug" "Mounted ${current_mounts_device} to ${current_mounts_point}") \
+					|| (log "error" "Failed to mount ${current_mounts_device} to ${current_mounts_point}" && exit 1)
+		unset current_mounts_index
+		mounted_mountpoints+=("${current_mounts_point}")
 	done
 }
+
 cleanup_mounts()
 {
-	if [ ! -d "$root_mnt" ]; then
+	if [ ! -d "${installer_root_mount}" ]; then
 		return
 	fi
 	log "debug" "Cleaning up mounts"
-	log "debug" "Recursively unmounting $root_mnt"
-	umount -R "$root_mnt"
-	log "debug" "Removing mountpoint $root_mnt"
-	rm -d "$root_mnt"
+
+	log "info" "Unmounting all mounted devices"
+	for ((current_mount_index=${#mounted_mountpoints[@]} - 1; current_mount_index >= 0; current_mount_index--)); do
+			echo ${current_mount_index}
+		local current_mountpoint="${mounted_mountpoints[${current_mount_index}]}"
+			echo ${current_mountpoint}
+		log "debug" "Unmounting ${current_mountpoint}"
+		umount "${installer_root_mount:?}/${current_mountpoint}" && unset mounted_mountpoints[${current_mount_index}]
+		unset current_mountpoint
+	done
+	
+	log "debug" "Removing all mountpoints"
+	for current_mountpoint_index in ${!created_mountpoints[@]}; do
+		local current_mountpoint="${created_mountpoints[${current_mountpoint_index}]}"
+		log "debug" "Removing ${current_mountpoint}"
+		rm -d "${current_mountpoint}" && unset created_mountpoints[${current_mountpoint_index}]
+		unset current_mountpoint_index
+	done	
 
 	if [ ${use_disk_encryption} -eq 1 ]; then
-		log "debug" "Closing $root_dev"
-		cryptsetup close "${crypt_name}"
+		log "info" "Closing all opened cryptodisks"
+		for current_crypt_index in ${!opened_cryptodisks[@]}; do
+			local current_crypt_name="${opened_cryptodisks[${current_crypt_index}]}"
+			log "debug" "Closing ${current_crypt_name}"
+			cryptsetup close "${current_crypt_name}" && unset opened_cryptodisks[${current_crypt_index}]
+			unset current_crypt_index
+		done
 	fi
 }
 
@@ -229,48 +270,60 @@ bootstrap_system()
 	log "debug" "Bootstrapping system"
 	
 	log "debug" "Running pacstrap"
-	pacstrap -cGM "$root_mnt" base || log "error" "Failed to bootstrap system"
+	pacstrap -cGM "${installer_root_mount}" base \
+		|| (log "error" "Failed to bootstrap system" && exit 1)
 
 	log "debug" "Running systemd-firstboot"
 	systemd-firstboot \
-	--root "$root_mnt" \
-	--locale "en_US.UTF-8" \
-	--hostname "$machinename" \
-	--force || log "error" "Failed to initially configure system"
+		--root "${installer_root_mount}" \
+		--locale "en_US.UTF-8" \
+		--hostname "${machinename}" \
+		--force \
+			|| (log "error" "Failed to initially configure system" && exit 1)
 }
 
 start_container()
 {
 	log "debug" "Configuring container"
 
-	mkdir -p "/etc/systemd/system/systemd-nspawn@$machinename.service.d"
-	cp "$configdir/nspawn/override.conf" \
-	"/etc/systemd/system/systemd-nspawn@$machinename.service.d/overrride.conf"
+	mkdir -p "/etc/systemd/system/systemd-nspawn@${machinename}.service.d"
+	cp "${configdir}/nspawn/override.conf" \
+		"/etc/systemd/system/systemd-nspawn@${machinename}.service.d/overrride.conf"
 
 	mkdir -p "/etc/systemd/nspawn"
-	cp "$configdir/nspawn/machinename.nspawn" \
-	"/etc/systemd/nspawn/$machinename.nspawn"
+	cp "${configdir}/nspawn/machinename.nspawn" \
+		"/etc/systemd/nspawn/${machinename}.nspawn"
 
 	log "debug" "Starting Container"
-	machinectl start "$machinename" && log "debug" "Started container"
+	machinectl start "${machinename}" && log "debug" "Started container"
+
+	started_containers+=("${machinename}")
 }
 poweroff_container()
 {
-	container_status="$(systemctl show "systemd-nspawn@$machinename" -P StatusText)"
-	if [ "$container_status" != "Container running: Ready." ]; then
+	local container_status="$(systemctl show "systemd-nspawn@${machinename}" -P StatusText)"
+	if [ "${container_status}" != "Container running: Ready." ]; then
 		return
 	fi
+	unset container_status
 
 	log "debug" "Shutting down container"
-	machinectl poweroff "$machinename"
+	machinectl poweroff "${machinename}"
 	
 	log "debug" "Cleaning up container configurations"
-	rm -rf "/etc/systemd/system/systemd-nspawn@$machinename.service.d"
-	rm -f "/etc/systemd/nspawn/$machinename.nspawn"
+	rm -rf "/etc/systemd/system/systemd-nspawn@${machinename}.service.d"
+	rm -f "/etc/systemd/nspawn/${machinename}.nspawn"
+
+	# TODO
+	# started_containers-=("${machinename}")
 }
 
 run_commands() # HYPERVISOR USER < COMMANDS
 {
+	local hypervisor="${1}"
+	local user="${2}"
+	
+	local prefix_commands
 	if [ ${verbosity} -ge 3 ]; then
 		prefix_commands='set -xe'
 	else
@@ -278,85 +331,95 @@ run_commands() # HYPERVISOR USER < COMMANDS
 	fi
 	case $1 in
 		"arch-chroot")
-			if [ "$2" != "root" ]; then
-				userarg="-u $2"
+			if [ "${user}" != "root" ]; then
+				userarg="-u ${user}"
 			fi
 
 			arch-chroot \
-			$userarg "$root_mnt" \
-			bash <<- ENDOFSCRIPT
-			${prefix_commands}
-			$(cat /dev/stdin)
-			ENDOFSCRIPT
+				${userarg} "${installer_root_mount}" \
+				bash <<- ENDOFSCRIPT
+				${prefix_commands}
+				$(cat /dev/stdin)
+				ENDOFSCRIPT
 			;;
 		"systemd-nspawn")
-			if [ "$2" != "root" ]; then
+			if [ "${user}" != "root" ]; then
 				userflag="--user"
 			fi
 
 			systemd-run \
-			$userflag -PM "$2"@"$machinename" \
-			bash <<- ENDOFSCRIPT
-			${prefix_commands}
-			$(cat /dev/stdin)
-			ENDOFSCRIPT
+				${userflag} -PM "${user}"@"${machinename}" \
+				bash <<- ENDOFSCRIPT
+				${prefix_commands}
+				$(cat /dev/stdin)
+				ENDOFSCRIPT
 			;;
 	esac
+	unset prefix_commands
 }
 
 run_script() # HYPERVISOR USER SCRIPT
 {
-	run_commands $1 $2 <<-ENDOFSCRIPT
-	$(cat "$configdir/scripts/$3/script")
-	ENDOFSCRIPT
+	local hypervisor="${1}"
+	local user="${2}"
+	local script="${3}"
+
+	run_commands "${hypervisor}" "${user}" <<- ENDOFSCRIPT > "/dev/null"
+		$(cat "${configdir}/scripts/${script}/script")
+		ENDOFSCRIPT
 }
 
 run_new_scripts()
 {	
 	log "debug" "Running container_scripts scripts"
-	for script in $container_scripts; do
-		log "debug" "Running $script script"
-		scriptdir="$configdir/scripts/${script}"
+	for current_script in ${container_scripts}; do
+		log "debug" "Running $current_script script"
+		local scriptdir="${configdir}/scripts/${current_script}"
 		if [ -r  "${scriptdir}/newscript" ]; then
 			source "${scriptdir}/newscript" \
-			|| log "error" "Failed to run $script"
+				|| (log "error" "Failed to run ${current_script}" && exit 1)
 		else
-			run_script "systemd-nspawn" "root" "$script" \
-			|| log "error" "Failed to run $script"
+			run_script "systemd-nspawn" "root" "${current_script}" \
+				|| (log "error" "Failed to run ${current_script}" && exit 1)
 		fi
-
+		unset scriptdir
+		unset current_script
 	done
 	
 	log "debug" "Running user_container_scripts scripts"
-	for script in $user_container_scripts; do
-		log "debug" "Running $script script"
-		scriptdir="$configdir/scripts/${script}"
+	for current_script in ${user_container_scripts}; do
+		log "debug" "Running $current_script script"
+		local scriptdir="${configdir}/scripts/${current_script}"
 		if [ -r  "${scriptdir}/newscript" ]; then
 			source "${scriptdir}/newscript" \
-			|| log "error" "Failed to run $script"
+				|| (log "error" "Failed to run ${current_script}" && exit 1)
 		else
-			run_script "systemd-nspawn" "$username" "$script" \
-			|| log "error" "Failed to run $script"
+			run_script "systemd-nspawn" "${username}" "${current_script}" \
+				|| (log "error" "Failed to run ${current_script}" && exit 1)
 		fi
+		unset scriptdir
+		unset current_script
 	done
 	
 	log "debug" "Running arch_chroot_scripts scripts"
-	for script in $arch_chroot_scripts; do
-		log "debug" "Running $script script"
-		scriptdir="$configdir/scripts/${script}"
+	for current_script in ${arch_chroot_scripts}; do
+		log "debug" "Running $current_script script"
+		local scriptdir="${configdir}/scripts/${current_script}"
 		if [ -r  "${scriptdir}/newscript" ]; then
 			source "${scriptdir}/newscript" \
-			|| log "error" "Failed to run $script"
+				|| (log "error" "Failed to run ${current_script}" && exit 1)
 		else
-			run_script "arch-chroot" "root" "$script" \
-			|| log "error" "Failed to run $script"
+			run_script "arch-chroot" "root" "${current_script}" \
+				|| (log "error" "Failed to run ${current_script}" && exit 1)
 		fi
+		unset scriptdir
+		unset current_script
 	done
 
 	log "debug" "Showing disk usage"
-	run_commands "systemd-nspawn" "root" <<- ENDOFSCRIPT
-	btrfs fi usage /
-	ENDOFSCRIPT
+	run_commands "systemd-nspawn" "root" <<- ENDOFSCRIPT > "/dev/null"
+		btrfs fi usage /
+		ENDOFSCRIPT
 }
 
 install()
@@ -375,9 +438,9 @@ install()
 	run_new_scripts
 	poweroff_container
 
-	if [ "$verbosity" -ge "2" ]; then
+	if [ ${verbosity} -ge 2 ]; then
 		log "debug" "Showing install size"
-		log "debug" "$(du -hs "$root_mnt")"
+		log "debug" "$(du -hs "${installer_root_mount}")"
 	fi
 	
 	cleanup_mounts
@@ -394,14 +457,15 @@ uninstall()
 	fi
 	setup_mounts
 
-	for ((i=${#mounts_points[@]}-1; i>=0; i--)); do
+	for ((i=${#mounts_points[@]} - 1; i >= 0; i--)); do
 		log "debug" "Clearing ${mounts_points[${i}]}"
-		rm -rf "${root_mnt}/${mounts_points[${i}]}"
+		rm -rf "${installer_root_mount:?}/${mounts_points[${i}]}"
 		log "debug" "Unmounting ${mounts_points[${i}]}"
-		umount "${root_mnt}/${mounts_points[${i}]}"
+		umount "${installer_root_mount:?}/${mounts_points[${i}]}"
+		unset i
 	done
 
-	rm -d "${root_mnt}"
+	rm -d "${installer_root_mount}"
 
 	cleanup_mounts
 
@@ -411,8 +475,10 @@ uninstall()
 reinstall()
 {
 	log "info" "Starting reinstall"
+
 	uninstall
 	install
+	
 	log "info" "Finished reinstall"
 }
 
@@ -423,9 +489,11 @@ nshell()
 	fi
 	setup_mounts
 	start_container
+
 	log "info" "Entering container"
-	machinectl shell "root"@"$machinename" 
+	machinectl shell "root"@"${machinename}" 
 	log "info" "Exited container"
+	
 	poweroff_container
 	cleanup_mounts
 }
@@ -436,9 +504,11 @@ cshell()
 		autopart_set_vars
 	fi
 	setup_mounts
+	
 	log "info" "Entering chroot"
-	arch-chroot "$root_mnt" bash
+	arch-chroot "$installer_root_mount" bash
 	log "info" "Exited chroot"
+	
 	cleanup_mounts
 }
 
@@ -446,11 +516,24 @@ cleanup_script()
 {
 	log "debug" "Running script cleanup"
 
-	poweroff_container
+	for current_container_index in ${!started_containers[@]}; do
+		local current_container="${started_containers[${current_container_index}]}"
+		poweroff_container "${current_container}" && unset started_containers[${current_container_index}]
+		unset current_container
+		unset current_container_index
+	done
+	
 	cleanup_mounts
 
 	trap - EXIT
 	trap - SIGINT
+
+	if [ ${verbosity} -ge 3 ]; then
+		log "debug" "Printing local variables"
+		local
+		log "debug" "Printing all variables"
+		set
+	fi
 
 	log "debug" "Exiting"
 	exit
@@ -458,14 +541,14 @@ cleanup_script()
 
 exit_hook()
 {
-	print "LRED" "Running exit hook"
+	log "error" "Running exit hook"
 	cleanup_script
 }
 
 sigint_hook()
 {
-	print "LRED" "Running sigint hook"
-	cleanup_script
+	log "error" "Running sigint hook"
+	exit_hook
 }
 
 setup_script()
@@ -476,58 +559,71 @@ setup_script()
 
 parse_args() # ACTION CONFIG
 {
-	if [ "$EUID" != "0" ]; then
-		log "error" "Insufficient Privileges"
-	elif [ "$*" == "" ]; then
-		log "error" "No arguments specified"
-	elif [ "$1" != "" ]; then
-		valid_action="0"
-		for action in install uninstall reinstall nshell cshell; do
-			if [ "$1" == "$action" ]; then
-				valid_action="1"
-			fi
-		done
-		if [ "$valid_action" == "0" ]; then
-			log "error" "Invalid action"
-		fi
-	elif [ "$2" == "" ]; then
-		log "error" "No config folder specified"
-	elif [ ! -f "$2/config" ]; then
-		log "error" "Config file $2/config does not exist"
+	installer_arguments_action="${1}"
+	installer_arguments_config="${2}"
+
+
+	case "${installer_arguments_action}" in
+		install | uninstall | reinstall | nshell | cshell )
+			# log "debug" "Valid action ${installer_arguments_action}"
+			;;
+		*)
+			(log "error" "Invalid action ${installer_arguments_action}" && exit 1)
+			;;
+	esac
+
+
+	if [ "${installer_arguments_config}" = "" ]; then
+		(log "error" "No config specified" && exit 1)
+	elif [ ! -e "${installer_arguments_config}" ]; then
+		(log "error" "Config ${installer_arguments_config} does not exist" && exit 1)
+	elif [ ! -e "${installer_arguments_config}" ]; then
+		(log "error" "Config file ${installer_arguments_config}/config does not exist" && exit 1)
 	fi
+}
 
-	script_action="$1"
+parse_config() # CONFIG
+{
+	local config_path="${1}"
 
-	scriptprefix="$(get_script_prefix)"
+	local scriptprefix="$(get_script_prefix)"
 
-	defaultconfigfile="$scriptprefix/configs/defaults/config"
-	default_config_contents="$(cat "${defaultconfigfile}")"
-	source "$defaultconfigfile"
+	local defaultconfigfile="${scriptprefix}/configs/defaults/config"
+	source "${defaultconfigfile}"
 
-	configfile="$2/config"
-	config_contents="$(cat "${configfile}")"
-	source "$configfile"
+	local configfile="${config_path}/config"
+	source "${configfile}"
 
-
-	unset="0"
+	local unset_vars=0
 	for var in configdir distro machinename; do
-    	if [ "${!var}" == "" ]; then
-        	log "warning" "$var is unset"
-        	unset="1"
+    	if [ "${var}" = "" ]; then
+        	log "warning" "${var} is unset"
+        	unset_vars=1
     	fi
 	done
 
-	if [ "$unset" == "1" ]; then
-    	log "error" "Insufficient configuration"
+	if [ ${unset_vars} -ne 0 ]; then
+    	(log "error" "Insufficient configuration" && exit 1)
 	fi
 
 	if [ ${verbosity} -ge 3 ]; then
-		set -xe
+		set -x
 	fi
+}
 
-	if [ "$sourced" == 0 ]; then
+entry() # ACTION CONFIG
+{
+	if [ ${EUID} -ne 0 ]; then
+		(log "error" "Run as root" && exit 1)
+	fi
+	
+	verbosity=1
+	parse_args "$@"
+	parse_config "${installer_arguments_config}"
+
+	if [ ${installer_is_sourced} -eq 0 ]; then
 		setup_script
-		"$script_action"
+		"$installer_arguments_action"
 		cleanup_script
 	else
 		setup_script
@@ -538,8 +634,8 @@ parse_args() # ACTION CONFIG
 # https://stackoverflow.com/a/28776166/18379499
 # https://unix.stackexchange.com/a/220840/517083
 if [ "$(return 0 2>/dev/null; printf "%s" "$?")" ]; then
-	sourced=0
-	parse_args "$@"
+	installer_is_sourced=0
+	entry "$@"
 else
-	sourced=1
+	installer_is_sourced=1
 fi
