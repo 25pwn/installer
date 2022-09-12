@@ -238,9 +238,7 @@ cleanup_mounts()
 
 	log "info" "Unmounting all mounted devices"
 	for ((current_mount_index=${#mounted_mountpoints[@]} - 1; current_mount_index >= 0; current_mount_index--)); do
-			echo ${current_mount_index}
 		local current_mountpoint="${mounted_mountpoints[${current_mount_index}]}"
-			echo ${current_mountpoint}
 		log "debug" "Unmounting ${current_mountpoint}"
 		umount "${installer_root_mount:?}/${current_mountpoint}" && unset mounted_mountpoints[${current_mount_index}]
 		unset current_mountpoint
