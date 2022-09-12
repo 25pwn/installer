@@ -489,7 +489,7 @@ nshell()
 	start_container
 
 	log "info" "Entering container"
-	machinectl shell "root"@"${machinename}" 
+	! machinectl shell "root"@"${machinename}" 
 	log "info" "Exited container"
 	
 	poweroff_container
@@ -504,7 +504,7 @@ cshell()
 	setup_mounts
 	
 	log "info" "Entering chroot"
-	arch-chroot "$installer_root_mount" bash
+	! arch-chroot "${installer_root_mount}" bash
 	log "info" "Exited chroot"
 	
 	cleanup_mounts
