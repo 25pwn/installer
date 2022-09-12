@@ -1,7 +1,6 @@
 #!/bin/bash
 ## installer config:
-
-verbosity="2"
+installer_verbosity=2
 
 configdir="$scriptprefix/configs/defaults/"
 

@@ -8,14 +8,14 @@ log() # LEVEL TEXT
 	local log_text_color
 	case "${log_level}" in
 		"debug")
-			if [ ${verbosity} -ge 2 ]; then
+			if [ ${installer_verbosity} -ge 2 ]; then
 				log_text_color="GREEN"
 			else
 				return
 			fi
 			;;
 		"info")
-			if [ ${verbosity} -ge 1 ]; then
+			if [ ${installer_verbosity} -ge 1 ]; then
 				log_text_color="LGREEN"
 			else
 				return
@@ -322,7 +322,7 @@ run_commands() # HYPERVISOR USER < COMMANDS
 	local user="${2}"
 	
 	local prefix_commands
-	if [ ${verbosity} -ge 3 ]; then
+	if [ ${installer_verbosity} -ge 3 ]; then
 		prefix_commands='set -xe'
 	else
 		prefix_commands='set -e'
@@ -436,7 +436,7 @@ install()
 	run_new_scripts
 	poweroff_container
 
-	if [ ${verbosity} -ge 2 ]; then
+	if [ ${installer_verbosity} -ge 2 ]; then
 		log "debug" "Showing install size"
 		log "debug" "$(du -hs "${installer_root_mount}")"
 	fi
@@ -526,7 +526,7 @@ cleanup_script()
 	trap - EXIT
 	trap - SIGINT
 
-	if [ ${verbosity} -ge 3 ]; then
+	if [ ${installer_verbosity} -ge 4 ]; then
 		log "debug" "Printing local variables"
 		local
 		log "debug" "Printing all variables"
@@ -604,7 +604,7 @@ parse_config() # CONFIG
     	(log "error" "Insufficient configuration" && exit 1)
 	fi
 
-	if [ ${verbosity} -ge 3 ]; then
+	if [ ${installer_verbosity} -ge 3 ]; then
 		set -x
 	fi
 }
@@ -615,7 +615,7 @@ entry() # ACTION CONFIG
 		(log "error" "Run as root" && exit 1)
 	fi
 	
-	verbosity=1
+	installer_verbosity=1
 	parse_args "$@"
 	parse_config "${installer_arguments_config}"
 
