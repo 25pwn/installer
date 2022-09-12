@@ -44,6 +44,8 @@ grub_bios_dev="" # /dev/loop0
 grub_removable=0
 grub_update_nvram=1
 
+zsh_run_chsh=0
+
 username="user" # user
 
 ## scripts:

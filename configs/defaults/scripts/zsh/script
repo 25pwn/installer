@@ -2,7 +2,10 @@
 
 configure()
 {
-	# sudo chsh -s $(which zsh) ${username}
+	if [ ${zsh_run_chsh} -eq 1 ]; then
+		sudo chsh -s "$(which zsh)" "${username}"
+	fi
+	
 	# homectl update --shell="/usr/bin/zsh"
 	tee $HOME/.zshrc <<- 'EOF' > /dev/null
 	source "$HOME/.bash_profile"
