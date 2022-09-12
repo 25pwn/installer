@@ -30,6 +30,8 @@ configure_grub_defaults()
 	cp "/etc/default/grub" "/etc/default/grub.backup"
 	tee -a /etc/default/grub <<- EOF > /dev/null
 	GRUB_DISTRIBUTOR="${machinename}"
+	GRUB_CMDLINE_LINUX=""
+	GRUB_CMDLINE_LINUX_DEFAULT=""
 	GRUB_PRELOAD_MODULES+=" part_gpt part_msdos "
 	GRUB_TIMEOUT=2
 	GRUB_TIMEOUT_STYLE='menu'
