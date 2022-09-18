@@ -6,14 +6,14 @@ mounts_devices=(${mounts_devices[@]})
 mounts_types=(${mounts_types[@]})
 mounts_opts=(${mounts_opts[@]})
 
-use_disk_encryption=${use_disk_encryption}
-keypath=${keypath}
-crypt_dev=${crypt_dev}
-crypt_type=${crypt_type}
-machinename=${machinename}
-grub_bios_dev=${grub_bios_dev}
-grub_efi=${grub_efi}
-grub_removable=${grub_removable}
-grub_update_nvram=${grub_update_nvram}
+use_disk_encryption="${use_disk_encryption}"
+crypt_keypath="${crypt_keypath}"
+crypt_dev="${crypt_dev}"
+crypt_type="${crypt_type}"
+machinename="${machinename}"
+grub_bios_dev="${grub_bios_dev}"
+grub_efi="${grub_efi}"
+grub_removable="${grub_removable}"
+grub_update_nvram="${grub_update_nvram}"
 $(cat "${scriptdir}/script")
 ENDOFSCRIPT
