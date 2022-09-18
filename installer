@@ -214,7 +214,7 @@ setup_mounts()
 
 	if [ ${use_disk_encryption} -eq 1 ]; then
 		log "debug" "Opening ${root_dev}"
-		printf '%s' "${passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
+		printf '%s' "${crypt_passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
 		opened_cryptodisks+=("${crypt_name}")
 	fi
 
@@ -224,7 +224,7 @@ setup_mounts()
 		local current_mounts_type="${mounts_types[${current_mounts_index}]}"
 		local current_mounts_opt="${mounts_opts[${current_mounts_index}]}"
 		
-		mkdir -p "${installer_root_mount}"/"${current_mounts_point}"
+		mkdir -p "${installer_root_mount}/${current_mounts_point}"
 		(mount "${current_mounts_device}" "$installer_root_mount/${current_mounts_point}" \
 			-t "${current_mounts_type}" -o "${current_mounts_opt}" \
 				&& log "debug" "Mounted ${current_mounts_device} to ${current_mounts_point}") \
