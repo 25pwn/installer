@@ -12,7 +12,7 @@ install_grub()
 	fi
 	
 	if [ ${grub_efi} -eq 1 ]; then
-		grub-install --target="x86_64-efi" --efi-directory="/boot/efi" --boot-directory="/boot/efi/EFI" --bootloader-id="GRUB" ${removable} ${no_nvram} --force
+		grub-install --target="x86_64-efi" --efi-directory="/boot/efi" --boot-directory="/boot/efi/EFI" --bootloader-id="${grub_bootloader_id}" ${removable} ${no_nvram} --force
 	fi
 	
 	if [ -e "${grub_bios_dev}" ]; then
