@@ -194,6 +194,11 @@ run_autopart()
 	mounts_types+=("btrfs")
 	mounts_opts+=("subvol=$btrfssubvol,compress=zstd:0")
 
+	mounts_points+=("/mnt/root")
+	mounts_devices+=("${root_dev}")
+	mounts_types+=("btrfs")
+	mounts_opts+=("subvol=,compress=zstd:0")
+
 	mounts_points+=("/boot/efi")
 	mounts_devices+=("${efi_dev}")
 	mounts_types+=("vfat")

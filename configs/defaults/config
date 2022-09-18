@@ -32,6 +32,11 @@ mounts_devices+=("") # /dev/loop0p3
 mounts_types+=("btrfs")
 mounts_opts+=("subvol=$btrfssubvol,compress=zstd:0")
 
+mounts_points+=("/mnt/root")
+mounts_devices+=("") # /dev/loop0p3
+mounts_types+=("btrfs")
+mounts_opts+=("subvol=,compress=zstd:0")
+
 mounts_points+=("/boot/efi")
 mounts_devices+=("") # /dev/loop0p2
 mounts_types+=("vfat")
