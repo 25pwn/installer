@@ -154,8 +154,8 @@ run_autopart()
 		crypt_dev=${root_dev}
 		root_dev="/dev/mapper/${crypt_name}"
 		mounts_devices[0]="${root_dev}"
-		printf '%s' "${passphrase}" | cryptsetup luksFormat --type "${crypt_type}" --pbkdf pbkdf2 "${crypt_dev}" --key-file -
-		printf '%s' "${passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
+		printf '%s' "${crypt_passphrase}" | cryptsetup luksFormat --type "${crypt_type}" --pbkdf pbkdf2 "${crypt_dev}" --key-file -
+		printf '%s' "${crypt_passphrase}" | cryptsetup open "${crypt_dev}" "${crypt_name}" --key-file -
 		opened_cryptodisks+=("${crypt_name}")
 	fi
 

@@ -158,7 +158,7 @@ configure_grub_luks1()
 configure_grub_luks_keyfile()
 {
 	tee -a "/etc/default/grub" <<- EOF > /dev/null
-	GRUB_CMDLINE_LINUX+=" rd.luks.key=${keypath} rd.luks.uuid=luks-$(cryptsetup luksUUID "${crypt_dev}") "
+	GRUB_CMDLINE_LINUX+=" rd.luks.key=${crypt_keypath} rd.luks.uuid=luks-$(cryptsetup luksUUID "${crypt_dev}") "
 	EOF
 }
 

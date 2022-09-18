@@ -19,17 +19,19 @@ crypt()
 	sudo mkdir -p "/etc/dracut.conf.d"
 	sudo tee "/etc/dracut.conf.d/crypt.conf" <<- 'EOF' > /dev/null
 	add_dracutmodules+=" crypt "
+	# kernel_cmdline+=" rd.luks=1 "
 	EOF
 }
 
 keyfile()
 {
-	sudo dd if="/dev/random" of="${keypath}" bs=1 count=4096
-	sudo chmod 0600 "${keypath}"
-	printf '%s' "${passphrase}" | sudo cryptsetup luksAddKey ${crypt_dev} /boot/key --key-file -
+	sudo dd if="/dev/random" of="${crypt_keypath}" bs=1 count=4096
+	sudo chmod 0600 "${crypt_keypath}"
+	printf '%s' "${crypt_passphrase}" | sudo cryptsetup luksAddKey ${crypt_dev} /boot/key --key-file -
 	
 	sudo mkdir -p "/etc/dracut.conf.d"
 	sudo tee /etc/dracut.conf.d/keyfile.conf <<- EOF > /dev/null
-	install_items+=" ${keypath} "
+	install_items+=" ${crypt_keypath} "
+	# kernel_cmdline+=" rd.luks.key=${crypt_keypath} rd.luks.uuid=luks-$(cryptsetup luksUUID "${crypt_dev}") "
 	EOF
 }
