@@ -19,9 +19,8 @@ crypt_erase_source="/dev/urandom"
 crypt_name="ROOT"
 crypt_dev="" # /dev/loop0p3
 crypt_type="luks1"
-
-keypath="/boot/key"
-passphrase="" # passwd
+crypt_keypath="/boot/key"
+crypt_passphrase="" # passwd
 
 mounts_points=()
 mounts_devices=()
