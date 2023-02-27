@@ -1,0 +1,3 @@
+tee $HOME/.tmux.conf << 'EOF' > /dev/null
+set -g history-limit 2147483647
+EOF

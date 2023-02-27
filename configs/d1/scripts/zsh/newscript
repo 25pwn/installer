@@ -1,0 +1,6 @@
+#!/bin/bash
+log "info" "Configuring zsh"
+run_commands "systemd-nspawn" "${username}" <<- ENDOFSCRIPT
+username="${username}"
+$(cat "${scriptdir}/script")
+ENDOFSCRIPT

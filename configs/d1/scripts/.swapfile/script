@@ -1,0 +1,25 @@
+#!/bin/bash
+
+swapfile_size=16G # size of swapfile in bytes
+swapfile_dir="/swap"
+swapfile_name="swap0" # location of swapfile
+
+swappiness="1" # swappiness
+
+swapfile_path="${swapfile_dir}/${swapfile_name}"
+
+sudo mkdir -p "${swapfile_dir}"
+sudo truncate -s 0 "${swapfile_path}"
+sudo chattr +Cm "${swapfile_path}"
+sudo fallocate -l ${swapfile_size} "${swapfile_path}"
+
+sudo chown root:root "${swapfile_path}"
+sudo chmod 0600 "${swapfile_path}"
+
+sudo sysctl vm.swappiness=${swappiness}
+echo "vm.swappiness=${swappiness}" | sudo tee "/etc/sysctl.d/swappiness.conf"
+
+sudo mkswap "${swapfile}"
+sudo swapon "${swapfile}"
+
+echo "${swapfile} none swap defaults" | sudo tee -a "/etc/fstab"

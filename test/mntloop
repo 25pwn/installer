@@ -1,0 +1,11 @@
+#!/bin/bash
+# usage: mntloop DEVICE
+if [ "$EUID" != "0" ]; then
+	printf "%s" "execute as root"
+	exit
+fi
+devpath="$1"
+
+losetup -fP "$1"
+loopdev=$(losetup -a | grep "$1" | awk -F ":" '{print $1}')
+printf '%s\n' "Mounted $1 as $loopdev"

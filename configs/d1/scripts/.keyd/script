@@ -1,0 +1,16 @@
+#!/bin/bash
+install()
+{
+	paru -Sy --noconfirm aur/keyd
+	tee -a "/etc/keyd/default.conf" <<- EOF > /dev/null
+		[ids]
+
+		*
+
+		[main]
+
+		micmute = noop
+	EOF
+	sudo systemctl enable --now keyd
+}
+install

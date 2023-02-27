@@ -1,0 +1,5 @@
+#!/bin/bash
+cd ${HOME}/Downloads
+wget -qc https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh
+
+

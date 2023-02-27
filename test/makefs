@@ -1,0 +1,10 @@
+#!/bin/bash
+# usage: mkfs PATH
+if [ "$EUID" != "0" ]; then
+	printf "%s" "execute as root"
+	exit
+fi
+devpath="$1"
+
+mkfs.vfat -F 32 "${devpath}"2
+mkfs.btrfs -f "${devpath}"3

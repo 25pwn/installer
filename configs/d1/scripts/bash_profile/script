@@ -1,0 +1,40 @@
+#!/bin/bash
+make_dropin()
+{
+	if [ -d "$HOME/.bash_profile.d" ]
+	then
+		return
+	fi
+	mkdir $HOME/.bash_profile.d
+	tee -a $HOME/.bash_profile <<- 'EOF' > /dev/null
+	# Append "$1" to $PATH when not already in.
+	# This function API is accessible to scripts in $HOME/.bash_profile.d
+	append_path () {
+		case ":$PATH:" in
+			*:"$1":*)
+				;;
+			*)
+				PATH="${PATH:+$PATH:}$1"
+		esac
+	}
+
+	# Append our default paths
+	# Force PATH to be environment
+	export PATH
+
+	# Load profiles from $HOME/.bash_profile.d
+	if test -d $HOME/.bash_profile.d; then
+			for profile in $HOME/.bash_profile.d/*.sh; do
+					test -r "$profile" && . "$profile"
+			done
+			unset profile
+	fi
+
+	# Unload our profile API functions
+	unset -f append_path
+	export SHELL="/usr/bin/zsh"
+	EOF
+	source $HOME/.bash_profile
+
+}
+make_dropin

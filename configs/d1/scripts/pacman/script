@@ -1,0 +1,174 @@
+#!/bin/bash
+
+initialize_keyring()
+{
+	pacman-key --init
+	pacman-key --populate archlinux
+}
+
+configure_default_repos()
+{
+	if [ -f "/etc/pacman.d/mirrorlist.backup" ]
+	then
+		return
+	fi
+	mv /etc/pacman.d/mirrorlist /etc/pacman.d/mirrorlist.backup
+	tee /etc/pacman.d/mirrorlist <<- 'EOF' > /dev/null
+	Server = https://mirrors.kernel.org/archlinux/$repo/os/$arch
+	Server = https://mirror.rackspace.com/archlinux/$repo/os/$arch
+	EOF
+}
+
+configure_pacman()
+{
+	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+	[options]
+	VerbosePkgLists
+	ParallelDownloads = 16
+	EOF
+}
+
+configure_paccache()
+{
+	if [ -f "/usr/share/libalpm/hooks/paccache.hook" ]
+	then
+		return
+	fi
+	tee /usr/share/libalpm/hooks/paccache.hook <<- 'EOF' > /dev/null
+	[Trigger]
+	Operation = Install
+	Operation = Remove
+	Operation = Upgrade
+	Type = Package
+	Target = *
+	[Action]
+	Description = running paccache -rvk1
+	When = PostTransaction
+	Exec = /usr/bin/paccache -rvk1
+	EOF
+	# pacman -Sc
+	pacman -Sy --needed --noconfirm pacman-contrib
+}
+
+setup_pacman()
+{
+	initialize_keyring
+	configure_default_repos
+	configure_pacman
+	configure_paccache
+}
+
+add_multilib_repo()
+{
+	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+	[multilib]
+	Include = /etc/pacman.d/mirrorlist
+	EOF
+}
+
+add_nicopwn_repo()
+{
+	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+	[options]
+	Include = /etc/pacman.d/nicopwn
+	EOF
+
+	tee -a /etc/pacman.d/nicopwn <<- 'EOF' > /dev/null
+	[nicopwn]
+	SigLevel = Optional TrustAll
+	Server = https://raw.githubusercontent.com/25pwn/pacman-repo/master/repo/$arch
+	EOF
+}
+
+add_chaotic_aur()
+{
+	pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
+	pacman-key --lsign-key FBA220DFC880C036
+	pacman -U --needed --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+	
+	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+	[options]
+	Include = /etc/pacman.d/chaotic-aur
+	EOF
+
+	tee -a /etc/pacman.d/chaotic-aur <<- 'EOF' > /dev/null
+	[chaotic-aur]
+	Include = /etc/pacman.d/chaotic-mirrorlist
+	EOF
+
+}
+
+add_g14_repo()
+{
+	tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+	[options]
+	Include = /etc/pacman.d/g14
+	EOF
+
+	tee -a /etc/pacman.d/g14 <<- 'EOF' > /dev/null
+	[g14]
+	SigLevel = DatabaseNever Optional TrustAll
+	Server = https://arch.asus-linux.org
+	EOF
+}
+
+add_repos()
+{
+	for repo in ${pacman_repo_list}; do
+		case ${repo} in
+			"multilib")
+				tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+				[multilib]
+				Include = /etc/pacman.d/mirrorlist
+				EOF
+				;;
+
+			"nicopwn")
+				tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+				[options]
+				Include = /etc/pacman.d/nicopwn
+				EOF
+
+				tee -a /etc/pacman.d/nicopwn <<- 'EOF' > /dev/null
+				[nicopwn]
+				SigLevel = Optional TrustAll
+				Server = https://raw.githubusercontent.com/25pwn/pacman-repo/master/repo/$arch
+				EOF
+				;;
+
+			"g14")
+				tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+				[options]
+				Include = /etc/pacman.d/g14
+				EOF
+
+				tee -a /etc/pacman.d/g14 <<- 'EOF' > /dev/null
+				[g14]
+				SigLevel = DatabaseNever Optional TrustAll
+				Server = https://arch.asus-linux.org
+				EOF
+				;;
+
+			"chaotic_aur")
+				pacman-key --recv-key FBA220DFC880C036 --keyserver keyserver.ubuntu.com
+				pacman-key --lsign-key FBA220DFC880C036
+				pacman -U --needed --noconfirm 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-keyring.pkg.tar.zst' 'https://cdn-mirror.chaotic.cx/chaotic-aur/chaotic-mirrorlist.pkg.tar.zst'
+				
+				tee -a /etc/pacman.conf <<- 'EOF' > /dev/null
+				[options]
+				Include = /etc/pacman.d/chaotic-aur
+				EOF
+
+				tee -a /etc/pacman.d/chaotic-aur <<- 'EOF' > /dev/null
+				[chaotic-aur]
+				Include = /etc/pacman.d/chaotic-mirrorlist
+				EOF
+				;;
+				
+		esac
+	done
+}
+
+setup_pacman
+add_repos
+pacman -Sy

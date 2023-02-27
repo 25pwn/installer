@@ -1,0 +1,20 @@
+#!/bin/bash
+log "info" "Installing and configuring grub"
+run_commands "arch-chroot" "root" <<- ENDOFSCRIPT
+mounts_points=(${mounts_points[@]})
+mounts_devices=(${mounts_devices[@]})
+mounts_types=(${mounts_types[@]})
+mounts_opts=(${mounts_opts[@]})
+
+use_disk_encryption="${use_disk_encryption}"
+crypt_keypath="${crypt_keypath}"
+crypt_dev="${crypt_dev}"
+crypt_type="${crypt_type}"
+machinename="${machinename}"
+grub_bios_dev="${grub_bios_dev}"
+grub_efi="${grub_efi}"
+grub_removable="${grub_removable}"
+grub_update_nvram="${grub_update_nvram}"
+grub_bootloader_id="${grub_bootloader_id}"
+$(cat "${scriptdir}/script")
+ENDOFSCRIPT

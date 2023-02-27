@@ -1,0 +1,111 @@
+#!/bin/bash
+## installer config:
+installer_verbosity=2
+
+configdir="$scriptprefix/configs/defaults/"
+
+## installation config:
+distro="archlinux"
+machinename="archlinux"
+
+btrfssubvol="sys/$machinename"
+
+autopart=0
+autopart_dev="" # /dev/loop0
+
+use_disk_encryption=0
+crypt_erase=0
+crypt_erase_source="/dev/urandom"
+crypt_name="ROOT"
+crypt_dev="" # /dev/loop0p3
+crypt_type="luks1"
+crypt_keypath="/boot/key"
+crypt_passphrase="" # passwd
+
+mounts_points=()
+mounts_devices=()
+mounts_types=()
+mounts_opts=()
+
+grub_efi=1
+grub_bios_dev="" # /dev/loop0
+grub_removable=0
+grub_update_nvram=1
+grub_bootloader_id="${machinename}"
+
+zsh_run_chsh=0
+
+username="user" # user
+
+## scripts:
+container_scripts="locale pacman sudo user-account"
+user_container_scripts="paru \
+nvidia \
+packages \
+networkmanager \
+zsh tmux htop \
+bash_profile systemd gtk pip wayland cc \
+flatpak flatpak-breeze-dark firefox-nightly" # asusctl supergfxctl
+arch_chroot_scripts="fstab"
+
+## script configs:
+## pacman
+pacman_repo_list="multilib" # g14
+
+## packages
+	unset pkgs
+	declare -A pkgs
+
+	## system
+	#pkgs[linux]="linux-zen linux-zen-headers linux-firmware dracut"
+	#pkgs[grub]="efibootmgr os-prober grub"
+	
+	pkgs[system]="sudo networkmanager util-linux"
+	pkgs[utils]="zsh grml-zsh-config nano vi tmux htop nvtop arch-install-scripts base-devel man-db p7zip openssh"
+	#pkgs[disk]="gptfdisk btrfs-progs exfatprogs e2fsprogs dosfstools ntfs-3g"
+	# pkgs[disk_extra]="f2fs-tools hfsprogs jfsutils reiserfsprogs xfsprogs xfsdump mtools nilfs-utils cryptsetup lvm2 udftools"
+	# pkgs[net_extra]="traceroute rsync wget curl aria2"
+	pkgs[other]="python"
+
+	## cpu
+	#pkgs[intel_cpu]="intel-ucode"
+	#pkgs[amd_cpu]="amd-ucode"
+
+	## gpu
+	pkgs[intel_gpu]="libva-intel-driver intel-gpu-tools"
+	pkgs[nvidia_gpu]="nvidia-dkms lib32-nvidia-utils nvidia-prime" # aur/libva-nvidia-driver
+	pkgs[amd_gpu]="libva-mesa-driver vulkan-radeon amdvlk mesa-vdpau radeontop"
+	pkgs[vaapi]="libva libva-utils libvdpau-va-gl"
+	pkgs[vdpau]="libva-vdpau-driver vdpauinfo"
+
+	## desktop
+	pkgs[fonts]="noto-fonts noto-fonts-cjk noto-fonts-emoji noto-fonts-extra"
+
+		pipewire_pkgs="pipewire pipewire-alsa pipewire-jack pipewire-pulse gst-plugin-pipewire wireplumber"
+		desktop_portals="xdg-desktop-portal-kde xdg-desktop-portal-gtk xdg-desktop-portal-gnome xdg-desktop-portal"
+	pkgs[desktop_base]="wayland $pipewire_pkgs $desktop_portals"
+	#pkgs[fcitx5]="fcitx5 fcitx5-qt fcitx5-gtk fcitx5-configtool fcitx5-hangul fcitx5-mozc"
+
+	#pkgs[kde_libs]="phonon-qt5-vlc phonon-qt5-gstreamer gst-libav gst-plugins-good gst-plugins-ugly gst-plugins-bad gstreamer-vaapi packagekit-qt5"
+	#pkgs[kde_plasma]="plasma-meta plasma sddm plasma-wayland-session"
+	pkgs[kde_apps]="konsole dolphin" # kate spectacle plasma-systemmonitor ksysguard ark kwalletmanager"
+	# pkgs[kde_apps_extra]="filelight partitionmanager gwenview"
+
+	pkgs[etc_apps]="flatpak gparted" # aur/protonvpn-gui aur/cloudflare-warp-bin" # aur/firefox-nightly-bin
+
+	#pkgs[c_devel]="gcc clang make cmake git gdb lldb"
+	#pkgs[vscode]="aur/visual-studio-code-bin gnome-keyring"
+	#pkgs[obs]="obs-studio v4l2loopback-dkms"
+	
+pkglist="${pkgs[@]}"
+
+if [ ${use_disk_encryption} -eq 1 ]; then
+	pkglist+=" cryptsetup "
+fi
+
+## flatpak
+flatpak_pkglist="org.gtk.Gtk3theme.Breeze-Dark org.mozilla.firefox" # com.github.tchx84.Flatseal org.mozilla.firefox com.usebottles.bottles
+
+## pip
+pip_pkglist="yt-dlp konsave"
+

@@ -1,0 +1,6 @@
+#!/bin/bash
+log "info" "Configuring template"
+run_commands "systemd-nspawn" "${username}" <<- ENDOFSCRIPT
+$(cat "${scriptdir}/script")
+configure
+ENDOFSCRIPT

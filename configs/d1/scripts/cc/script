@@ -1,0 +1,9 @@
+#!/bin/bash
+paru -Sy --needed --noconfirm clang lld
+tee $HOME/.bash_profile.d/cc.sh << 'EOF' > /dev/null
+#!/bin/bash
+export CC="clang"
+export CXX="clang++"
+export LDFLAGS="-fuse-ld=lld"
+EOF
+source $HOME/.bash_profile

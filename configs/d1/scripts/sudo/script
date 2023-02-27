@@ -1,0 +1,9 @@
+#!/bin/bash
+pacman -S --needed --noconfirm sudo
+tee /etc/sudoers.d/wheel << 'EOF' > /dev/null
+%wheel ALL=(ALL) ALL
+EOF
+
+tee /etc/sudoers.d/timestamp_timeout << 'EOF' > /dev/null
+Defaults timestamp_timeout=-1
+EOF

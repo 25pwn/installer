@@ -1,0 +1,8 @@
+#!/bin/bash
+# usage: dalloc SIZE PATH
+size="$1"
+devpath="$2"
+
+truncate -s 0 "$devpath"
+chattr +Cm "$devpath"
+fallocate -l "$size" "$devpath"

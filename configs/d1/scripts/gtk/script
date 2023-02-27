@@ -1,0 +1,4 @@
+#!/bin/bash
+tee $HOME/.bash_profile.d/gtk.sh << 'EOF' > /dev/null
+export GTK_USE_PORTAL=1
+EOF

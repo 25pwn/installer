@@ -59,7 +59,7 @@ dracut nvidia \
 packages \
 networkmanager sddm \
 zsh tmux htop \
-bash_profile systemd fcitx5 gtk pip wayland \
+bash_profile systemd fcitx5 gtk pip wayland cc \
 flatpak flatpak-breeze-dark firefox-nightly" # asusctl supergfxctl
 arch_chroot_scripts="fstab grub"
 

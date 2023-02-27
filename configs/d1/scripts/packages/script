@@ -1,0 +1,2 @@
+#!/bin/bash
+paru -Sy --needed --noconfirm base ${pkglist}

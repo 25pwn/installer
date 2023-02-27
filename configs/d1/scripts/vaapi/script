@@ -1,0 +1,7 @@
+#!/bin/bash
+tee $HOME/.bash_profile.d/vaapi.sh << 'EOF' > /dev/null
+#!/bin/bash
+#export LIBVA_DRIVERS_PATH=
+#export LIBVA_DRIVER_NAME=
+EOF
+source $HOME/.bash_profile

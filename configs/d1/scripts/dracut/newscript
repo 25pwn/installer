@@ -1,0 +1,19 @@
+#!/bin/bash
+log "info" "Installing and configuring dracut"
+run_commands "systemd-nspawn" "${username}" <<- ENDOFSCRIPT
+$(cat "${scriptdir}/script")
+install
+compress
+ENDOFSCRIPT
+
+if [ ${use_disk_encryption} -eq 1 ]; then
+	log "info" "Generating keyfile and configuring dracut to embed it in initramfs"
+	run_commands "arch-chroot" "root" <<- ENDOFSCRIPT
+	crypt_keypath="${crypt_keypath}"
+	crypt_passphrase="${crypt_passphrase}"
+	crypt_dev="${crypt_dev}"
+	$(cat "${scriptdir}/script")
+	crypt
+	keyfile
+	ENDOFSCRIPT
+fi

@@ -1,0 +1,6 @@
+#!/bin/bash
+tee $HOME/.bash_profile.d/systemd_pager.sh << 'EOF' > /dev/null
+#!/bin/bash
+export SYSTEMD_PAGER=""
+EOF
+source /etc/profile

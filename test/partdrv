@@ -1,0 +1,15 @@
+#!/bin/bash
+# usage: partdrv PATH
+if [ "$EUID" != "0" ]; then
+	printf "%s\n" "execute as root"
+	exit
+fi
+devpath="$1"
+sgdisk -Z "$devpath"
+sgdisk -o "$devpath"
+sgdisk \
+	--new=1:0:+1MiB --typecode=1:ef02 \
+	--new=2:0:+128MiB   --typecode=2:EF00 --change-name=2:EFI \
+	--new=3:0:0       --typecode=3:8300 --change-name=3:ROOT \
+	"$devpath"
+partprobe

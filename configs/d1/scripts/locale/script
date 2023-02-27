@@ -1,0 +1,19 @@
+#!/bin/bash
+generatelocale()
+{
+	if [ -f /etc/locale.gen.backup ]
+	then
+		return
+	fi
+	mv /etc/locale.gen /etc/locale.gen.backup
+	tee /etc/locale.gen <<- 'EOF' > /dev/null
+	en_US.UTF-8 UTF-8
+	EOF
+	locale-gen
+	
+	unset LANG
+	source /etc/profile.d/locale.sh
+
+	localectl set-locale LANG=en_US.UTF-8
+}
+generatelocale

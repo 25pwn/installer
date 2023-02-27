@@ -1,0 +1,24 @@
+#!/bin/bash
+generate_fstab()
+{
+	for current_mounts_index in ${!mounts_points[@]}; do
+		current_mounts_point="${mounts_points[${current_mounts_index}]}"
+		current_mounts_device="${mounts_devices[${current_mounts_index}]}"
+		current_mounts_type="${mounts_types[${current_mounts_index}]}"
+		current_mounts_opt="${mounts_opts[${current_mounts_index}]}"
+		
+		fstab_dev_uuid="$(blkid ${current_mounts_device} -s UUID -o value)"
+		if [ "$fstab_dev_uuid" = "" ]; then
+			fstab_dev_uuid="$(lsblk -rno UUID ${current_mounts_device})"
+		fi
+
+		if [ "$fstab_dev_uuid" = "" ]; then
+			fstab_dev_id="${current_mounts_device}"
+		else
+			fstab_dev_id="UUID=$fstab_dev_uuid"
+		fi
+
+		printf "%s\n" "${fstab_dev_id} ${current_mounts_point} ${current_mounts_type} ${current_mounts_opt}" | tee -a "/etc/fstab" > /dev/null
+	done
+}
+generate_fstab
